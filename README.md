@@ -29,3 +29,7 @@ Conversion for Anvil-format Shapes patches, which can also be used in Aleph One 
 
 Applies an Anvil Shapes patch to a Shapes file. ShapeFusion can also do this.
 
+### strings2xml.pl
+
+Converts 'STR ' and 'STR#' resources into a format suitable for pasting into Aleph One MML. Good for repackaging Marathon TCs. Also good for inspecting any classic Mac string resources.
+
