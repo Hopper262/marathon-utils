@@ -25,7 +25,7 @@ Uses Image::Magick to produce images from a Shapes XML file. Creates animated GI
 
 Conversion for Anvil-format Shapes patches, which can also be used in Aleph One plugins. [ShapeFusion](http://shapefusion.sourceforge.net/) can be used to create patches. These scripts are good for verifying that your patches contain everything they're supposed to, and nothing they shouldn't.
 
-## applypatch.pl
+### applypatch.pl
 
 Applies an Anvil Shapes patch to a Shapes file. ShapeFusion can also do this.
 
