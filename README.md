@@ -19,7 +19,11 @@ Converts Marathon 2 Preview Shapes to XML. The Marathon 2 Preview used a file fo
 
 ### shapesxml2images.pl
 
-Uses Image::Magick to produce images from a Shapes XML file. Creates animated GIFs from sequences
+Uses Image::Magick to produce images from a Shapes XML file. Creates animated GIFs from sequences.
+
+### shapesxml2marine.pl
+
+Written for the [Samsara](http://forum.zdoom.org/viewtopic.php?f=19&t=33219) Doom mod, this generates every combination of the player torso and leg sprites as a GIF, with a consistent frame size and origin. It builds nearly 23,000 images from the Infinity shapes.
 
 ### patch2xml.pl, xml2patch.pl
 
