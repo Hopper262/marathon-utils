@@ -1,0 +1,847 @@
+#!/usr/bin/env perl
+use strict;
+use warnings 'FATAL' => 'all';
+
+my @COLLECTIONS = split("\n", <<END);
+_collection_interface
+_collection_weapons_in_hand
+_collection_juggernaut /* Pfhor walls */
+_collection_tick /* Looker */
+_collection_rocket
+_collection_hunter
+_collection_player
+_collection_items
+_collection_trooper /* Marathon switches */
+_collection_fighter
+_collection_defender /* HUD */
+_collection_yeti /* unused */
+_collection_civilian
+_collection_civilian_fusion /* unused */
+_collection_enforcer
+_collection_hummer /* Hulk */
+_collection_compiler
+_collection_walls1
+_collection_walls2
+_collection_walls3
+_collection_walls4 /* unused */
+_collection_walls5 /* Juggernaut */
+_collection_scenery1 /* MADD */
+_collection_scenery2
+_collection_scenery3 /* Pfhor switches */
+_collection_scenery4
+_collection_scenery5 /* Trooper */
+_collection_landscape1 /* Wasp */
+_collection_landscape2 /* unused */
+_collection_landscape3 /* Pfhor queen */
+_collection_landscape4 /* unused */
+_collection_cyborg /* unused */
+END
+
+
+my @ITEMS = split("\n", <<END);
+_i_knife
+_i_magnum
+_i_magnum_magazine
+_i_plasma_pistol
+_i_plasma_magazine
+_i_assault_rifle
+_i_assault_rifle_magazine
+_i_assault_grenade_magazine
+_i_missile_launcher
+_i_missile_launcher_magazine
+_i_invisibility_powerup
+_i_invincibility_powerup
+_i_infravision_powerup
+_i_alien_shotgun
+_i_alien_shotgun_magazine
+_i_flamethrower
+_i_flamethrower_canister
+_i_extravision_powerup
+_i_oxygen_powerup
+_i_energy_powerup
+_i_double_energy_powerup
+_i_triple_energy_powerup
+_i_shotgun
+_i_shotgun_magazine
+_i_spht_door_key
+_i_uplink_chip
+_i_light_blue_ball /* BALL_ITEM_BASE */
+_i_red_ball
+_i_violet_ball
+_i_yellow_ball
+_i_brown_ball
+_i_orange_ball
+_i_blue_ball /* heh heh */
+_i_green_ball
+_i_smg
+_i_smg_ammo
+END
+
+my @SOUNDS = split("\n", <<END);
+_snd_startup
+_snd_teleport_in
+_snd_teleport_out
+_snd_body_being_crunched
+_snd_creak /* _snd_nuclear_hard_death */
+_snd_absorbed
+_snd_breathing
+_snd_oxygen_warning
+_snd_suffocation
+_snd_energy_refuel
+_snd_oxygen_refuel
+_snd_cant_toggle_switch
+_snd_switch_on
+_snd_switch_off
+_snd_puzzle_switch
+_snd_chip_insertion
+_snd_pattern_buffer
+_snd_destroy_control_panel
+_snd_adjust_volume
+_snd_got_powerup
+_snd_got_item
+_snd_bullet_ricochet
+_snd_metallic_ricochet
+_snd_empty_gun
+_snd_spht_door_opening
+_snd_spht_door_closing
+_snd_spht_door_obstructed
+_snd_spht_platform_starting
+_snd_spht_platform_stopping
+_snd_owl
+_snd_smg_firing
+_snd_smg_reloading
+_snd_heavy_spht_platform_starting
+_snd_heavy_spht_platform_stopping
+_snd_fist_hitting
+_snd_magnum_firing
+_snd_magnum_reloading
+_snd_assault_rifle_firing
+_snd_grenade_launcher_firing
+_snd_grenade_exploding
+_snd_grenade_flyby
+_snd_fusion_firing
+_snd_fusion_exploding
+_snd_fusion_flyby
+_snd_fusion_charging
+_snd_rocket_exploding
+_snd_rocket_flyby
+_snd_rocket_firing
+_snd_flamethrower
+_snd_body_falling
+_snd_body_exploding
+_snd_bullet_hitting_flesh
+_snd_fighter_activate
+_snd_fighter_wail
+_snd_fighter_scream
+_snd_fighter_chatter
+_snd_fighter_attack
+_snd_fighter_projectile_hit
+_snd_fighter_projectile_flyby
+_snd_compiler_attack
+_snd_compiler_death
+_snd_compiler_hit
+_snd_compiler_projectile_flyby
+_snd_compiler_projectile_hit
+_snd_cyborg_moving
+_snd_cyborg_attack
+_snd_cyborg_hit
+_snd_cyborg_death
+_snd_cyborg_projectile_bounce
+_snd_cyborg_projectile_hit
+_snd_cyborg_projectile_flyby
+_snd_hummer_activate
+_snd_hummer_start_attack
+_snd_hummer_attack
+_snd_hummer_dying
+_snd_hummer_death
+_snd_hummer_projectile_hit
+_snd_hummer_projectile_flyby
+_snd_human_wail
+_snd_human_scream
+_snd_human_hit
+_snd_human_chatter
+_snd_assimilated_human_chatter
+_snd_human_trash_talk
+_snd_human_apology
+_snd_human_activation
+_snd_human_clear
+_snd_human_stop_shooting_me_you_bastard
+_snd_human_area_secure
+_snd_kill_the_player
+_snd_water
+_snd_sewage
+_snd_lava
+_snd_goo
+_snd_under_media
+_snd_wind
+_snd_waterfall
+_snd_siren
+_snd_fan
+_snd_spht_door
+_snd_spht_platform
+_snd_alien_harmonics
+_snd_heavy_spht_platform
+_snd_light_machinery
+_snd_heavy_machinery
+_snd_transformer
+_snd_sparking_transformer
+_snd_water_drip
+_snd_walking_in_water
+_snd_exit_water
+_snd_enter_water
+_snd_small_water_splash
+_snd_medium_water_splash
+_snd_large_water_splash
+_snd_walking_in_lava
+_snd_enter_lava
+_snd_exit_lava
+_snd_small_lava_splash
+_snd_medium_lava_splash
+_snd_large_lava_splash
+_snd_walking_in_sewage
+_snd_exit_sewage
+_snd_enter_sewage
+_snd_small_sewage_splash
+_snd_medium_sewage_splash
+_snd_large_sewage_splash
+_snd_walking_in_goo
+_snd_exit_goo
+_snd_enter_goo
+_snd_small_goo_splash
+_snd_medium_goo_splash
+_snd_large_goo_splash
+_snd_major_fusion_firing
+_snd_major_fusion_charged
+_snd_assault_rifle_reloading
+_snd_assault_rifle_shell_casings
+_snd_shotgun_firing
+_snd_shotgun_reloading
+_snd_ball_bounce
+_snd_you_are_it
+_snd_got_ball
+_snd_computer_interface_logon
+_snd_computer_interface_logout
+_snd_computer_interface_page
+_snd_heavy_spht_door
+_snd_heavy_spht_door_opening
+_snd_heavy_spht_door_closing
+_snd_heavy_spht_door_open
+_snd_heavy_spht_door_closed
+_snd_heavy_spht_door_obstructed
+_snd_hunter_activate
+_snd_hunter_attack
+_snd_hunter_dying
+_snd_hunter_landing
+_snd_hunter_exploding
+_snd_hunter_projectile_hit
+_snd_hunter_projectile_flyby
+_snd_enforcer_activate
+_snd_enforcer_attack
+_snd_enforcer_projectile_hit
+_snd_enforcer_projectile_flyby
+_snd_yeti_melee_attack
+_snd_yeti_melee_attack_hit
+_snd_yeti_projectile_attack
+_snd_yeti_projectile_sewage_attack_hit
+_snd_yeti_projectile_sewage_flyby
+_snd_yeti_projectile_lava_attack_hit
+_snd_yeti_projectile_lava_flyby
+_snd_yeti_dying
+_snd_machine_binder
+_snd_machine_bookpress
+_snd_machine_puncher
+_snd_electric
+_snd_alarm
+_snd_night_wind
+_snd_surface_explosion
+_snd_underground_explosion
+_snd_defender_attack
+_snd_defender_hit
+_snd_defender_flyby
+_snd_defender_being_hit
+_snd_defender_exploding
+_snd_tick_chatter
+_snd_tick_falling
+_snd_tick_flapping
+_snd_tick_exploding
+_snd_ceiling_lamp_exploding
+_snd_pfhor_platform_starting
+_snd_pfhor_platform_stopping
+_snd_pfhor_platform
+_snd_pfhor_door_opening
+_snd_pfhor_door_closing
+_snd_pfhor_door_obstructed
+_snd_pfhor_door
+_snd_pfhor_switch_off
+_snd_pfhor_switch_on
+_snd_juggernaut_firing
+_snd_juggernaut_warning
+_snd_juggernaut_exploding
+_snd_juggernaut_preparing_to_fire
+_snd_enforcer_exploding
+_snd_alien_noise1
+_snd_alien_noise2
+_snd_civilian_fusion_wail
+_snd_civilian_fusion_scream
+_snd_civilian_fusion_hit
+_snd_civilian_fusion_chatter
+_snd_assimilated_civilian_fusion_chatter
+_snd_civilian_fusion_trash_talk
+_snd_civilian_fusion_apology
+_snd_civilian_fusion_activation
+_snd_civilian_fusion_clear
+_snd_civilian_fusion_stop_shooting_me_you_bastard
+_snd_civilian_fusion_area_secure
+_snd_civilian_fusion_kill_the_player
+END
+
+my @DAMAGES = split("\n", <<END);
+_damage_explosion
+_damage_electrical_staff
+_damage_projectile
+_damage_absorbed
+_damage_flame
+_damage_hound_claws
+_damage_alien_projectile
+_damage_hulk_slap
+_damage_compiler_bolt
+_damage_fusion_bolt
+_damage_hunter_bolt
+_damage_fist
+_damage_teleporter
+_damage_defender
+_damage_yeti_claws
+_damage_yeti_projectile
+_damage_crushing
+_damage_lava
+_damage_suffocation
+_damage_goo
+_damage_energy_drain
+_damage_oxygen_drain
+_damage_hummer_bolt
+_damage_shotgun_projectile
+END
+my @WEAKNESSES = map { 'FLAG(' . $_ . ')' } @DAMAGES;
+
+my @EFFECTS = split("\n", <<END);
+_effect_rocket_explosion
+_effect_rocket_contrail
+_effect_grenade_explosion
+_effect_grenade_contrail
+_effect_bullet_ricochet
+_effect_alien_weapon_ricochet
+_effect_flamethrower_burst
+_effect_fighter_blood_splash
+_effect_player_blood_splash
+_effect_civilian_blood_splash
+_effect_assimilated_civilian_blood_splash
+_effect_enforcer_blood_splash
+_effect_compiler_bolt_minor_detonation
+_effect_compiler_bolt_major_detonation
+_effect_compiler_bolt_major_contrail
+_effect_fighter_projectile_detonation
+_effect_fighter_melee_detonation
+_effect_hunter_projectile_detonation
+_effect_hunter_spark
+_effect_minor_fusion_detonation
+_effect_major_fusion_detonation
+_effect_major_fusion_contrail
+_effect_fist_detonation
+_effect_minor_defender_detonation
+_effect_major_defender_detonation
+_effect_defender_spark
+_effect_trooper_blood_splash
+_effect_water_lamp_breaking
+_effect_lava_lamp_breaking
+_effect_sewage_lamp_breaking
+_effect_alien_lamp_breaking
+_effect_metallic_clang
+_effect_teleport_object_in
+_effect_teleport_object_out
+_effect_small_water_splash
+_effect_medium_water_splash
+_effect_large_water_splash
+_effect_large_water_emergence
+_effect_small_lava_splash
+_effect_medium_lava_splash
+_effect_large_lava_splash
+_effect_large_lava_emergence
+_effect_small_sewage_splash
+_effect_medium_sewage_splash
+_effect_large_sewage_splash
+_effect_large_sewage_emergence
+_effect_small_goo_splash
+_effect_medium_goo_splash
+_effect_large_goo_splash
+_effect_large_goo_emergence
+_effect_minor_hummer_projectile_detonation
+_effect_major_hummer_projectile_detonation
+_effect_durandal_hummer_projectile_detonation
+_effect_hummer_spark
+_effect_cyborg_projectile_detonation
+_effect_cyborg_blood_splash
+_effect_minor_fusion_dispersal
+_effect_major_fusion_dispersal
+_effect_overloaded_fusion_dispersal
+_effect_sewage_yeti_blood_splash
+_effect_sewage_yeti_projectile_detonation
+_effect_water_yeti_blood_splash
+_effect_lava_yeti_blood_splash
+_effect_lava_yeti_projectile_detonation
+_effect_yeti_melee_detonation
+_effect_juggernaut_spark
+_effect_juggernaut_missile_contrail
+_effect_small_jjaro_splash
+_effect_medium_jjaro_splash
+_effect_large_jjaro_splash
+_effect_large_jjaro_emergence
+_effect_civilian_fusion_blood_splash
+_effect_assimilated_civilian_fusion_blood_splash
+END
+
+sub ReadUNone
+{
+  return FormatUNone(ReadUint16());
+}
+sub FormatUNone
+{
+  my ($res) = @_;
+  return 'UNONE' if $res == 65535;
+  return $res;
+}
+sub ReadSNone
+{
+  return FormatSNone(ReadSint16());
+}
+sub FormatSNone
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return $res;
+}
+sub ReadBoolean
+{
+  return FormatBoolean(ReadUint8());
+}
+sub FormatBoolean
+{
+  my ($res) = @_;
+  return 'false' if $res == 0;
+  return 'true';
+}
+sub ReadFixedOne
+{
+  return FormatFixedOne(ReadSint32());
+}
+sub ReadFixedOne16
+{
+  return FormatFixedOne(ReadSint16());
+}
+sub FormatFixedOne
+{
+  my ($res) = @_;
+  return 'FIXED_ONE' if $res == 65536;
+  return 'FIXED_ONE_HALF' if $res == 32768;
+  for my $i (2..20, 25, 32, 35, 300, 400)
+  {
+    for my $j ($i, $i * 10)
+    {
+      return "FIXED_ONE/$j" if $res == int(65536/$j);
+      return "$j*FIXED_ONE" if $res == 65536*$j;
+    }
+  }
+  for my $frac ([3, 2], [5, 2],
+                [2, 3],
+                [3, 4], [5, 4],
+                [4, 5],
+                [5, 8])
+  {
+    my ($num, $den) = @$frac;
+    return "($num*FIXED_ONE)/$den" if $res == int(65536*$num/$den);
+  }
+  for my $den (6, 15, 25)
+  {
+    return "FIXED_ONE+FIXED_ONE/$den" if $res == int(65536+65536/$den);
+  }
+  
+  return $res;
+}
+sub ReadWorldOne
+{
+  return FormatWorldOne(ReadSint16());
+}
+sub FormatWorldOne
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return '0' if $res == 0;
+  if ($res > 0)
+  {
+    return 'INT16_MAX' if $res == 32767;
+    return 'WORLD_ONE' if $res == 1024;
+    return 'WORLD_ONE_HALF' if $res == 512;
+    return 'WORLD_ONE_FOURTH' if $res == 256;
+    return 'WORLD_THREE_FOURTHS' if $res == 768;
+    for my $i (2..40)
+    {
+      for my $j ($i)
+      {
+        return "WORLD_ONE/$j" if $res == int(1024/$j);
+        return "$j*WORLD_ONE" if $res == 1024*$j;
+      }
+    }
+    for my $frac ([3, 2], [5, 2],
+                  [2, 3],
+                  [3, 4], [5, 4],
+                  [4, 5],
+                  [5, 8])
+    {
+      my ($num, $den) = @$frac;
+      return "($num*WORLD_ONE)/$den" if $res == int(1024*$num/$den);
+    }
+  }
+  else
+  {
+    return 'INT16_MIN' if $res == -32768;
+    return '-WORLD_ONE' if $res == -1024;
+    return '-WORLD_ONE_HALF' if $res == -512;
+    return '-WORLD_ONE_FOURTH' if $res == -256;
+    return '-WORLD_THREE_FOURTHS' if $res == -768;
+    for my $i (2..40)
+    {
+      for my $j ($i)
+      {
+        return "-WORLD_ONE/$j" if $res == int(-1024/$j);
+        return "-$j*WORLD_ONE" if $res == -1024*$j;
+      }
+    }
+    for my $frac ([3, 2], [5, 2],
+                  [2, 3],
+                  [3, 4], [5, 4],
+                  [4, 5],
+                  [5, 8])
+    {
+      my ($num, $den) = @$frac;
+      return "-($num*WORLD_ONE)/$den" if $res == int(-1024*$num/$den);
+    }
+  }
+  return $res;
+}
+
+
+sub ReadQCircle
+{
+  return FormatQCircle(ReadSint32());
+}
+sub FormatQCircle
+{
+  my ($res) = @_;
+  return 'QUARTER_CIRCLE*FIXED_ONE' if $res == 128*65536;
+  for my $i (2..8)
+  {
+    return "QUARTER_CIRCLE*FIXED_ONE/$i" if $res == int(128*65536/$i);
+  }
+  return FormatFixedOne($res);
+}
+
+sub ReadAngle
+{
+  return FormatAngle(ReadSint16());
+}
+sub FormatAngle
+{
+  my ($res) = @_;
+  return 'QUARTER_CIRCLE' if $res == 128;
+  return 'HALF_CIRCLE' if $res == 256;
+  return 'THREE_QUARTER_CIRCLE' if $res == 384;
+  return 'FULL_CIRCLE' if $res == 512;
+  return 'EIGHTH_CIRCLE' if $res == 64;
+  return 'SIXTEENTH_CIRCLE' if $res == 32;
+  for my $i (3, 5, 6)
+  {
+    return "QUARTER_CIRCLE/$i" if $res == int(128/$i);
+    return "$i*QUARTER_CIRCLE" if $res == int(128*$i);
+  }
+  
+  for my $i (100, 150, 200)
+  {
+    return "NUMBER_OF_ANGLES/$i" if $res == int(512/$i);
+  }
+  return $res;
+}
+
+sub ReadMTicks
+{
+  return FormatMTicks(ReadUint16());
+}
+sub FormatMTicks
+{
+  my ($res) = @_;
+  return 'MACHINE_TICKS_PER_SECOND' if $res == 60;
+  for my $j (2..30)
+  {
+    return "MACHINE_TICKS_PER_SECOND/$j" if $res == int(60/$j);
+    return "$j*MACHINE_TICKS_PER_SECOND" if $res == 60*$j;
+  }
+  for my $frac ([3, 2], [5, 2],
+                [2, 3],
+                [3, 4], [5, 4],
+                [4, 5],
+                [3, 8], [5, 8])
+  {
+    my ($num, $den) = @$frac;
+    return "($num*MACHINE_TICKS_PER_SECOND)/$den" if $res == int(60*$num/$den);
+  }
+  return $res;
+}
+
+sub ReadTicks
+{
+  return FormatTicks(ReadUint16());
+}
+sub FormatTicks
+{
+  my ($res) = @_;
+  return 'NONE' if $res == 65535;
+  return 'TICKS_PER_SECOND' if $res == 30;
+  for my $j (2..15)
+  {
+    return "TICKS_PER_SECOND/$j" if $res == int(30/$j);
+    return "$j*TICKS_PER_SECOND" if $res == 30*$j;
+  }
+  for my $frac ([3, 2], [5, 2],
+                [2, 3],
+                [3, 4], [5, 4],
+                [4, 5],
+                [3, 8], [5, 8])
+  {
+    my ($num, $den) = @$frac;
+    return "($num*TICKS_PER_SECOND)/$den" if $res == int(30*$num/$den);
+  }
+  return $res;
+}
+
+
+sub FormatColor
+{
+  my ($res) = @_;
+  return $res unless $res;
+  unless ($res % 256)
+  {
+    return sprintf("%d*256", $res/256);
+  }
+  return $res;
+}
+sub ReadRGB
+{
+  return '{' . join(', ', FormatColor(ReadUint16()),
+                          FormatColor(ReadUint16()),
+                          FormatColor(ReadUint16())) . '}';
+}
+
+sub ReadFlags8
+{
+  return FormatFlags(ReadUint8(), @_);
+}
+sub ReadFlags16
+{
+  return FormatFlags(ReadUint16(), @_);
+}
+sub ReadFlags32
+{
+  return FormatFlags(ReadUint32(), @_);
+}
+sub FormatFlags
+{
+  my ($val, $flags) = @_;
+  return 0 unless $val;
+
+  my @set;
+  for my $i (0..31)
+  {
+    my $bitmask = 1 << $i;
+    if ($val & $bitmask)
+    {
+      return $val unless defined $flags->[$i];
+      push(@set, $flags->[$i]);
+    }
+    elsif ($val == (4294967295 - $bitmask))
+    {
+      return '(~' . $flags->[$i] . ')';
+    }
+  }
+  if (scalar @set)
+  {
+    return join('|', @set);
+  }
+  return $val;
+}
+
+sub ReadEnum16
+{
+  my $res = FormatEnum(ReadUint16(), @_);
+  return 'NONE' if $res eq '65535';
+  return $res;
+}
+sub ReadEnum32
+{
+  return FormatEnum(ReadUint32(), @_);
+}
+sub FormatEnum
+{
+  my ($val, $enums) = @_;
+  
+  if (ref($enums) eq 'HASH')
+  {
+    return $enums->{$val} if defined $enums->{$val};
+  }
+  elsif (ref($enums) eq 'ARRAY')
+  {
+    return $enums->[$val] if defined $enums->[$val];
+  }
+  return $val;
+}
+
+sub ReadCollection
+{
+  my $res = ReadUint16();
+  return 'UNONE' if $res == 65535;
+  return FormatCollection($res % 32, int($res / 32));
+}
+sub FormatCollection
+{
+  my ($coll, $clut) = @_;
+  
+  my $cname = $COLLECTIONS[$coll] || $coll;
+  return "BUILD_COLLECTION($cname, $clut)";
+}
+sub ReadCollectionOpt
+{
+  my $res = ReadUint16();
+  return 'UNONE' if $res == 65535;
+  return FormatCollectionOpt($res % 32, int($res / 32));
+}
+sub ReadCollectionSOpt
+{
+  my $res = ReadCollectionOpt();
+  return 'NONE' if $res eq 'UNONE';
+  return $res;
+}
+sub FormatCollectionOpt
+{
+  my ($coll, $clut) = @_;
+  
+  my $cname = $COLLECTIONS[$coll] || $coll;
+  return $cname unless $clut;
+  return "BUILD_COLLECTION($cname, $clut)";
+}
+sub ReadDescriptor
+{
+  my $res = ReadUint16();
+  return 'UNONE' if $res == 65535;
+  return FormatDescriptor(int($res / 256), $res % 256);
+}
+sub FormatDescriptor
+{
+  my ($coll, $shape) = @_;
+  
+  my $cname = FormatCollectionOpt($coll % 32, int($coll / 32));
+  return "BUILD_DESCRIPTOR($cname, $shape)";
+}
+  
+sub ReadItemId
+{
+  return FormatItemId(ReadSint16());
+}
+sub FormatItemId
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return FormatEnum($res, \@ITEMS);
+}
+sub ReadSoundId
+{
+  return FormatSoundId(ReadSint16());
+}
+sub FormatSoundId
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+
+  ## TODO: map sounds
+  return $res;
+  # return FormatEnum($res, \@SOUNDS);
+}
+
+sub ReadDamageType
+{
+  return FormatDamageType(ReadSint16());
+}
+sub FormatDamageType
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return FormatEnum($res, \@DAMAGES);
+}
+sub ReadDamageFlags
+{
+  return FormatDamageFlags(ReadSint16());
+}
+sub FormatDamageFlags
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return FormatFlags($res, [qw(_alien_damage)]);
+}
+
+sub ReadWeaknesses
+{
+  return FormatWeaknesses(ReadUint32());
+}
+sub FormatWeaknesses
+{
+  my ($res) = @_;
+  return '-1' if $res == 4294967295;
+  return FormatFlags($res, \@WEAKNESSES);
+}
+
+sub ReadEffectType
+{
+  return FormatEffectType(ReadSint16());
+}
+sub FormatEffectType
+{
+  my ($res) = @_;
+  return 'NONE' if $res == -1;
+  return FormatEnum($res, \@EFFECTS);
+}
+
+sub ReadDamage
+{
+  my @parts = (
+    ReadDamageType(),
+    ReadDamageFlags(),
+    ReadSint16(), ReadSint16());
+  my $scale = ReadFixedOne();
+  if ($scale ne '0')
+  {
+    push(@parts, $scale);
+  }
+  return '{' . join(', ', @parts) . '}';
+}
+
+################
+
+sub ItemLine
+{
+  return '		' . join(', ', @_) . ",\n";
+}
+sub ItemCommentLine
+{
+  my @items = @_;
+  my $comment = pop @items;
+  return '		' . join(', ', @items, '/* ' . $comment . ' */') . "\n";
+}
+
+
+1;
