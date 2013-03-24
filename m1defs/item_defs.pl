@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(14474);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -60,6 +61,7 @@ for my $itemnum (0..19)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 sub ReadItemKind
 {

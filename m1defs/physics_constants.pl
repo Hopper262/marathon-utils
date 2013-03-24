@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(14814);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -73,4 +74,5 @@ END
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 

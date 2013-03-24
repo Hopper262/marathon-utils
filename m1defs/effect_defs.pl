@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(15922);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -36,6 +37,7 @@ for my $effectnum (0..37)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 sub ReadEffectFlags
 {

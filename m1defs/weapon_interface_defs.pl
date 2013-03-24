@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(3828);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -84,6 +85,7 @@ for my $wepnum (0..6)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 sub ReadAmmoType
 {

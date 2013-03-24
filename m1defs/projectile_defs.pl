@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(15018);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -85,6 +86,7 @@ for my $projnum (0..24)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 
 sub ReadProjFlags

@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(5012);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -97,6 +98,7 @@ for my $platnum (0..5)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 
 sub ReadPlatType

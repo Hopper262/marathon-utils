@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(7846);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -183,6 +184,7 @@ for my $monnum (0..40)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 
 sub ReadMonFlags

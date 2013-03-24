@@ -6,6 +6,7 @@ require "$FindBin::Bin/io.subs";
 require "$FindBin::Bin/enum.subs";
 
 SetReadOffset(16150);
+warn "Starting at: " . CurOffset() . "\n";
 print <<END;
 /*****
  * Marathon compatibility notes:
@@ -64,6 +65,7 @@ for my $scenum (0..16)
 print <<END;
 };
 END
+warn "Ending at: " . CurOffset() . "\n";
 
 sub ReadSceneryFlags
 {

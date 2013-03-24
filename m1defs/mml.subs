@@ -1,0 +1,98 @@
+#!/usr/bin/env perl
+use strict;
+use warnings 'FATAL' => 'all';
+use XML::Simple ();
+
+sub FormatMML
+{
+  my ($hashref) = @_;
+  
+  return XML::Simple::XMLout($hashref, 
+                             'RootName' => 'marathon',
+                             'KeyAttr' => [],
+                             );
+}
+
+sub ReadColor16
+{
+  return FormatColor16(ReadUint16(), ReadUint16(), ReadUint16());
+}
+sub FormatColor16
+{
+  my ($red, $green, $blue) = @_;
+  
+  return { 'red' => FormatFloat($red / 65535),
+           'green' => FormatFloat($green / 65535),
+           'blue' => FormatFloat($blue / 65535),
+         };
+}
+            
+sub ReadFixedOne
+{
+  return FormatFixedOne(ReadSint32());
+}
+sub ReadFixedOne16
+{
+  return FormatFixedOne(ReadSint16());
+}
+sub FormatFixedOne
+{
+  my ($res) = @_;
+  return FormatFloat($res / 65536);
+}
+
+sub ReadMTicks
+{
+  return ReadUint16();
+}
+sub ReadWorldOne
+{
+  return ReadSint16();
+}
+sub ReadSoundId
+{
+  return ReadSint16();
+}
+
+sub ReadDescriptor
+{
+  my $res = ReadUint16();
+  return {} if $res == 65535;
+  
+  my $collclut = int($res / 256);
+  return FormatShape($collclut % 32,
+                     int($collclut / 32),
+                     $res % 256);
+}
+sub FormatShape
+{
+  my ($coll, $clut, $seq) = @_;
+  return { 'coll' => $coll,
+           'clut' => $clut,
+           'seq' => $seq,
+         };
+}
+
+sub ReadDamage
+{
+  return {
+    'type' => ReadSint16(),
+    'flags' => ReadSint16(),
+    'base' => ReadSint16(),
+    'random' => ReadSint16(),
+    'scale' => ReadFixedOne(),
+    };
+}
+
+
+sub FormatFloat
+{
+  my ($num) = @_;
+  
+  my $fmt = sprintf("%.4f", $num);
+  $fmt =~ s/0+$//;
+  $fmt =~ s/\.$//;
+  return $fmt;
+}
+
+1;
