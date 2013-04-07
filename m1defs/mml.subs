@@ -54,6 +54,11 @@ sub ReadSoundId
   return ReadSint16();
 }
 
+sub ReadFrame
+{
+  return ReadSint16();
+}
+
 sub ReadDescriptor
 {
   my $res = ReadUint16();
@@ -84,7 +89,13 @@ sub ReadDamage
     };
 }
 
-
+sub ReadBool
+{
+  my $res = ReadUint8();
+  return 'false' if $res == 0;
+  return 'true';
+}
+  
 sub FormatFloat
 {
   my ($num) = @_;
