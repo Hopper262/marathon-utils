@@ -8,17 +8,29 @@ The global data block is 18806 bytes in length. Identified sections:
 - 0-109: cheat codes
 - 109-916: [unknown]
 - 916-1248: date/time strings
-- 1248-2339: [unknown]
-- 2339-2814: [zeroes]
-- 2814-3218: [unknown]
+- 1248-1310: [unknown sparse data]
+- 1310-1412: [19 x 6-byte records: index, -1, unknown]
+- 1412-1440: [zeroes]
+- 1440-1484: [unknown]
+- 1484-1850: [zeroes]
+- 1850-1918: [unknown sparse data]
+- 1918-2144: [zeroes]
+- 2144-2340: [unknown]
+- 2340-2814: [zeroes]
+- 2814-3012: [unknown]
+- 3012-3174: [9 x 18-byte records]
+- 3174-3218: [zeroes]
 - 3218-3812: fade defs
 - 3812-3828: [zeroes, mostly]
 - 3828-4234: weapon interface defs
-- 4234-4472: [unknown]
+- 4234-4454: [11 x 20-byte records]
+- 4454-4468: [zeroes]
+- 4468-4472: 640, 480
 - 4472-4644: [zeroes]
 - 4644-4868: terminal tags
 - 4868-4940: [zeroes]
-- 4940-5012: [unknown]
+- 4940-4964: [6 x 4-byte records: -1, unknown; like 1310?]
+- 4964-5012: [unknown - 0, 90, 60]
 - 5012-5348: platform defs
 - 5348-5576: wad tags
 - 5576-7460: [zeroes, mostly]
@@ -32,7 +44,8 @@ The global data block is 18806 bytes in length. Identified sections:
 - 13610-13634: [zeroes]
 - 13634-14474: weapon defs
 - 14474-14714: item defs
-- 14714-14814: [unknown]
+- 14714-14772: [unknown]
+- 14772-14814: [7 x 6-byte records: colors?]
 - 14814-15014: physics constants
 - 15014-15018: [zeroes]
 - 15018-15918: projectile defs
