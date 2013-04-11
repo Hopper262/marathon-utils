@@ -37,3 +37,7 @@ Applies an Anvil Shapes patch to a Shapes file. ShapeFusion can also do this.
 
 Converts 'STR ' and 'STR#' resources into a format suitable for pasting into Aleph One MML. Good for repackaging Marathon TCs. Also good for inspecting any classic Mac string resources.
 
+### rsrc2mml.pl
+
+Converts 'nrct', 'clut', 'finf', and 'STR#' resources from a Marathon-series application's resource fork into a format suitable for pasting into Aleph One MML. Even better than the above for repackaging Marathon TCs.
+
