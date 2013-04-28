@@ -19,14 +19,14 @@ for my $i (0..3)
 {
   push(@fonts, {
           'index' => $i,
-          'id' => $map_font_id,
+          'file' => '#' . $map_font_id,
           'style' => $map_font_style,
           'size' => ReadSint16(),
         });
 }
 push(@fonts, {
         'index' => 4,
-        'id' => $map_font_id,
+        'file' => '#' . $map_font_id,
         'style' => 0,
         'size' => $fonts[3]{'size'},
       });
