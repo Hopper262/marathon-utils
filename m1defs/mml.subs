@@ -13,6 +13,14 @@ sub FormatMML
                              );
 }
 
+sub ReadIndexedColor16
+{
+  my ($index) = @_;
+  
+  return { 'index' => $index,
+           %{ FormatColor16(ReadUint16(), ReadUint16(), ReadUint16()) },
+         };
+}
 sub ReadColor16
 {
   return FormatColor16(ReadUint16(), ReadUint16(), ReadUint16());
