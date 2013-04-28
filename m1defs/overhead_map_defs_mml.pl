@@ -57,7 +57,7 @@ for my $i (0..2)
     push(@lines, {
             'type' => $i,
             'scale' => $j,
-            'size' => ReadSint16(),
+            'width' => ReadSint16(),
           });
   }
 }
