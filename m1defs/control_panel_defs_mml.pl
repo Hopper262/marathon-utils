@@ -28,6 +28,7 @@ for my $pnum (0..13)
   $hash{'sound'} = [
       { 'type' => 0, 'which' => ReadSoundId() },
       { 'type' => 1, 'which' => ReadSoundId() },
+      { 'type' => 2, 'which' => '20180' },  # hardcoded in engine
     ];
   
   push(@panels, \%hash);
