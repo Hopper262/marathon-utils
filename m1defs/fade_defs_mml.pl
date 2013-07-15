@@ -17,7 +17,7 @@ for my $fadenum (0..26)
         'color' => ReadColor16(),
         'initial_opacity' => ReadFixedOne(),
         'final_opacity' => ReadFixedOne(),
-        'period' => ReadMTicks(),
+        'period' => sprintf("%d", ReadMTicks() * 1000 / 60),
         'flags' => ReadUint8(),
         'priority' => 0,
         });
