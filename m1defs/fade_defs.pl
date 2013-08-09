@@ -23,36 +23,6 @@ static struct fade_definition m1_fade_definitions[]=
 {
 END
 
-my @fades = qw(
-	_start_cinematic_fade_in
-	_cinematic_fade_in
-	_long_cinematic_fade_in
-	_cinematic_fade_out
-	_end_cinematic_fade_out
-	_fade_red
-	_fade_big_red
-	_fade_bonus
-	_fade_bright
-	_fade_long_bright
-	_fade_yellow
-	_fade_big_yellow
-	_fade_purple
-	_fade_cyan
-	_fade_white
-	_fade_big_white
-	_fade_orange
-	_fade_long_orange
-	_fade_green
-	_fade_long_green
-	_fade_static
-	_fade_negative
-	_fade_big_negative
-	_fade_dodge_purple
-	_fade_burn_cyan
-	_fade_dodge_yellow
-	_fade_burn_green
-  );
-
 for my $fadenum (0..26)
 {
   print '	{';
@@ -67,7 +37,7 @@ for my $fadenum (0..26)
           0);
   ReadUint8();  # flag set on cinematic fades - no M2 equivalent
   
-  print '}, /* ' . ($fades[$fadenum] || 'unknown') . " */\n";
+  print '}, /* ' . FormatFadeType($fadenum) . " */\n";
   
   if ($fadenum == 22)
   {

@@ -53,7 +53,7 @@ _monster_can_teleport_under_media
 _monster_chooses_weapons_randomly
 END
 
-for my $monnum (0..40)
+for my $monnum (0..39)
 {
   print "	{\n";
   

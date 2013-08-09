@@ -43,8 +43,9 @@ The global data block is 18806 bytes in length. Identified sections:
 - 7672-7704: [zeroes]
 - 7704-7844: control panels and switches
 - 7844-7846: [zeroes]
-- 7846-13504: monster defs
-- 13504-13536: [32 bytes: unknown]
+- 7846-13366: monster defs
+- 13366-13526: damage response defs
+- 13526-13536: player initial items
 - 13536-13610: player shape defs
 - 13610-13634: [zeroes]
 - 13634-14474: weapon defs
