@@ -5,19 +5,21 @@ Perl scripts to read and convert Marathon 1 global data definitions into source 
 
 The global data block is 18806 bytes in length. Identified sections:
 
-- 0-109: cheat codes
-- 109-916: [unknown]
+- 0-110: cheat codes
+- 110-916: [806 bytes: unknown]
 - 916-1248: date/time strings
-- 1248-1310: [unknown sparse data]
+- 1248-1310: [62 bytes: unknown sparse data]
 - 1310-1412: [19 x 6-byte records: index, -1, unknown]
 - 1412-1440: [zeroes]
-- 1440-1484: [unknown]
+- 1440-1484: [44 bytes: unknown]
 - 1484-1850: [zeroes]
-- 1850-1918: [unknown sparse data]
+- 1850-1918: [68 bytes: unknown sparse data]
 - 1918-2144: [zeroes]
-- 2144-2340: [unknown]
+- 2144-2228: [84 bytes: unknown]
+- 2228-2292: [16 x 4-byte records: sound, flags?]
+- 2292-2340: [48 bytes: unknown]
 - 2340-2814: [zeroes]
-- 2814-3012: [unknown]
+- 2814-3012: [198 bytes: unknown]
 - 3012-3174: [9 x 18-byte records]
 - 3174-3218: [zeroes]
 - 3218-3812: fade defs
@@ -39,12 +41,12 @@ The global data block is 18806 bytes in length. Identified sections:
 - 7704-7844: control panels and switches
 - 7844-7846: [zeroes]
 - 7846-13504: monster defs
-- 13504-13536: [unknown]
+- 13504-13536: [32 bytes: unknown]
 - 13536-13610: player shape defs
 - 13610-13634: [zeroes]
 - 13634-14474: weapon defs
 - 14474-14714: item defs
-- 14714-14772: [unknown]
+- 14714-14772: [58 bytes: unknown]
 - 14772-14814: [7 x 6-byte records: colors?]
 - 14814-15014: physics constants
 - 15014-15018: [zeroes]
@@ -52,7 +54,7 @@ The global data block is 18806 bytes in length. Identified sections:
 - 15918-15922: [zeroes]
 - 15922-16150: effect defs
 - 16150-16286: scenery defs
-- 16286-16302: [unknown]
+- 16286-16302: [16 bytes: unknown]
 - 16302-16944: [zeroes, mostly]
 - 16944-EOF: [generic library data?]
 
