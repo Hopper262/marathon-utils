@@ -6,7 +6,9 @@ Perl scripts to read and convert Marathon 1 global data definitions into source 
 The global data block is 18806 bytes in length. Identified sections:
 
 - 0-110: cheat codes
-- 110-916: [806 bytes: unknown]
+- 110-614: key definitions
+- 614-788: [174 bytes: unknown]
+- 788-916: [zeroes]
 - 916-1248: date/time strings
 - 1248-1310: [62 bytes: unknown sparse data]
 - 1310-1412: [19 x 6-byte records: index, -1, unknown]
@@ -15,7 +17,8 @@ The global data block is 18806 bytes in length. Identified sections:
 - 1484-1850: [zeroes]
 - 1850-1918: [68 bytes: unknown sparse data]
 - 1918-2144: [zeroes]
-- 2144-2228: [84 bytes: unknown]
+- 2144-2194: [50 bytes: unknown]
+- 2194-2228: [zeroes]
 - 2228-2292: [16 x 4-byte records: sound, flags?]
 - 2292-2340: [48 bytes: unknown]
 - 2340-2814: [zeroes]
