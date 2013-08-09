@@ -19,7 +19,7 @@ The global data block is 18806 bytes in length. Identified sections:
 - 2228-2292: [16 x 4-byte records: sound, flags?]
 - 2292-2340: [48 bytes: unknown]
 - 2340-2814: [zeroes]
-- 2814-3012: [198 bytes: unknown]
+- 2814-3012: [serial number tables]
 - 3012-3174: [9 x 18-byte records]
 - 3174-3218: [zeroes]
 - 3218-3812: fade defs
