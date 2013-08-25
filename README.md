@@ -41,3 +41,7 @@ Converts 'STR ' and 'STR#' resources into a format suitable for pasting into Ale
 
 Converts 'nrct', 'clut', 'finf', and 'STR#' resources from a Marathon-series application's resource fork into a format suitable for pasting into Aleph One MML. Even better than the above for repackaging Marathon TCs.
 
+### wad2dir.pl
+
+Extracts each chunk of a Marathon wad file, for easier inspection of the raw data. Like Atque, without any of the smart bits. This handles Marathon 1 and 2 formats, but will not accept MacBinary-encoded files.
+
