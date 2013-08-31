@@ -3,7 +3,7 @@ marathon-utils
 
 Perl scripts to read and write Marathon / Aleph One Shapes and other data files. These generally use XML as an intermediate format, to easily inspect the binary data and to separate file parsing from transformation tasks.
 
-These are all command-line tools. Usually the input is expected on stdin and output is written to stdout.
+These are all command-line tools. Usually the input is expected on stdin and output is written to stdout. If you're starting from MacBinary-encoded files, see my "classic-mac-utils" repository for scripts and instructions.
 
 ### shapes2xml.pl, xml2shapes.pl
 
