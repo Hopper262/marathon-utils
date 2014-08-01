@@ -275,6 +275,11 @@ sub ReadRaw
   {
     my $chunk;
     my $rsize = read STDIN, $chunk, $size;
+    unless (defined $rsize)
+    {
+      return undef if $nofail;
+      die $!;
+    }
     $BLOBoff += $rsize;
     unless ($rsize == $size)
     {
