@@ -28,7 +28,7 @@ my (@collinfo);
     $minoff = $off8  if (($off8  > 0) && ($off8  < $minoff));
     $minoff = $off16 if (($off16 > 0) && ($off16 < $minoff));
     
-    push(@collinfo, [ $off8, $len8, $coll++, 8 ], [ $off16, $len16, $coll, 16 ]);
+    push(@collinfo, [ $off8, $len8, $coll, 8 ], [ $off16, $len16, $coll++, 16 ]);
   }
 }
 
