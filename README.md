@@ -45,3 +45,11 @@ Converts 'nrct', 'clut', 'finf', and 'STR#' resources from a Marathon-series app
 
 Extracts each chunk of a Marathon wad file, for easier inspection of the raw data. Like Atque, without any of the smart bits. This handles Marathon 1 and 2 formats, but will not accept MacBinary-encoded files.
 
+### map2xml.pl
+
+Converts Marathon maps or saved games to XML. This is a work in progress; only the geometry and a few other structures are exported. The script can also be used to do some basic inspection of other wad files. This handles Marathon 1 and 2 formats, but will not accept MacBinary-encoded files.
+
+### mapxml2images.pl
+
+Converts map XML (from map2xml.pl) into images similar to the in-game automap. Uses Cairo as the rendering engine to output PNG, PDF, or SVG files. Call with the "-help" option for more information.
+
