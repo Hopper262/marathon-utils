@@ -7,6 +7,7 @@ use Carp;
 use bytes;
 
 our $SAMPLE = 0;
+our $DECODE_TERM_TEXT = 0;
 
 my $out = XML::Writer->new('DATA_MODE' => 1, 'DATA_INDENT' => '  ', 'ENCODING' => 'us-ascii', 'UNSAFE' => 1);
 $out->startTag('wadfile');
@@ -26,8 +27,10 @@ my $dirEntrySize = ReadUint16() + $appSpecificSize;
 ReadPadding(4); # parent checksum 
 ReadPadding(40); # unused
 
+my $M1_MODE = 0;
 if ($wadType < 2)
 {
+  $M1_MODE = 1;
   $appSpecificSize = 0;
   $entrySize = 12;
   $dirEntrySize = 8;
@@ -102,9 +105,70 @@ for my $lev (0..scalar(@levels)-1)
     
     if ($size)
     {
-      if ($type eq 'NAME')
+      if ($type eq 'ambi') # ambient sounds
       {
-        $out->characters(ReadFixedString($size));
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('ambient_sound', 'index' => $index++,
+                         'flags' => ReadUint16(),
+                         'sound_index' => ReadSint16(),
+                         'volume' => ReadSint16(),
+                         );
+          ReadPadding(10);
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'bonk') # random sounds
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('random_sound', 'index' => $index++,
+                         'flags' => ReadUint16(),
+                         'sound_index' => ReadSint16(),
+                         'volume' => ReadSint16(),
+                         'delta_volume' => ReadSint16(),
+                         'period' => ReadSint16(),
+                         'delta_period' => ReadSint16(),
+                         'direction' => ReadSint16(),
+                         'delta_direction' => ReadSint16(),
+                         'pitch' => ReadFixed(),
+                         'delta_pitch' => ReadFixed(),
+                         'phase' => ReadSint16(),
+                         );
+          ReadPadding(6);
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'EPNT') # endpoints
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('endpoint', 'index' => $index++,
+                         'flags' => ReadUint16(),
+                         'highest_floor' => ReadSint16(),
+                         'lowest_ceiling' => ReadSint16(),
+                         'x' => ReadSint16(),
+                         'y' => ReadSint16(),
+                         'x_transformed' => ReadSint16(),
+                         'y_transformed' => ReadSint16(),
+                         'poly' => ReadSint16(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'iidx') # map indexes
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('map_index', 'index' => $index++,
+                         'value' => ReadSint16(),
+                         );
+          last if $SAMPLE;
+        }
       }
       elsif ($type eq 'LINS') # lines
       {
@@ -127,21 +191,215 @@ for my $lev (0..scalar(@levels)-1)
           last if $SAMPLE;
         }
       }
-      elsif ($type eq 'EPNT') # endpoints
+      elsif ($type eq 'LITE') # lightsources
       {
         my $index = 0;
         while (CurOffset() < $endOffset)
         {
-          $out->emptyTag('endpoint', 'index' => $index++,
+          if ($M1_MODE)
+          {
+            $out->emptyTag('light', 'index' => $index++,
+                           'flags' => ReadUint16(),
+                           'type' => ReadSint16(),
+                           'mode' => ReadSint16(),
+                           'phase' => ReadSint16(),
+                           'minimum_intensity' => ReadFixed(),
+                           'maximum_intensity' => ReadFixed(),
+                           'period' => ReadSint16(),
+                           'intensity' => ReadFixed(),
+                           );
+            ReadPadding(10);
+          }
+          else
+          {
+            $out->emptyTag('light', 'index' => $index++,
+                           'type' => ReadSint16(),
+                           'flags' => ReadUint16(),
+                           'phase' => ReadSint16(),
+                           genNamedList(
+                              [qw(primary_active_ secondary_active_
+                                  becoming_active_
+                                  primary_inactive_ secondary_inactive_
+                                  becoming_inactive_)],
+                              'function' => \&ReadSint16,
+                              'period' => \&ReadSint16,
+                              'delta_period' => \&ReadSint16,
+                              'intensity' => \&ReadFixed,
+                              'delta_intensity' => \&ReadFixed,
+                              ),
+                           'tag' => ReadSint16(),
+                           );
+            ReadPadding(8);
+          }
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'medi') # media
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('media', 'index' => $index++,
+                         'type' => ReadSint16(),
                          'flags' => ReadUint16(),
-                         'highest_floor' => ReadSint16(),
-                         'lowest_ceiling' => ReadSint16(),
-                         'x' => ReadSint16(),
-                         'y' => ReadSint16(),
-                         'x_transformed' => ReadSint16(),
-                         'y_transformed' => ReadSint16(),
-                         'poly' => ReadSint16(),
+                         'light_index' => ReadSint16(),
+                         'current_direction' => ReadSint16(),
+                         'current_magnitude' => ReadSint16(),
+                         'low' => ReadSint16(),
+                         'high' => ReadSint16(),
+                         'origin_x' => ReadSint16(),
+                         'origin_y' => ReadSint16(),
+                         'height' => ReadSint16(),
+                         'minimum_light_intensity' => ReadFixed(),
+                         genShape('transparent_tex_', ReadUint16()),
+                         'transfer_mode' => ReadSint16(),
                          );
+          ReadPadding(4);
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'Minf') # static info
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          my @tags = (
+               'environment_code' => ReadSint16(),
+               'physics_model' => ReadSint16(),
+               'song_index' => ReadSint16(),
+               'mission_flags' => ReadSint16(),
+               'environment_flags' => ReadSint16(),
+                     );
+          ReadPadding(8);
+          $name = ReadFixedString(66);
+          push(@tags, 'entry_point_flags' => ReadUint32());
+          
+          $out->startTag('mapinfo', 'index' => $index++, @tags);
+          $out->raw(escapeForXml($name));
+          $out->endTag('mapinfo');
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'NAME')
+      {
+        $out->characters(ReadFixedString($size));
+      }
+      elsif ($type eq 'NOTE') # annotations
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->startTag('annotation', 'index' => $index++,
+                         'type' => ReadSint16(),
+                         'location_x' => ReadSint16(),
+                         'location_y' => ReadSint16(),
+                         'polygon_index' => ReadSint16(),
+                         );
+          $out->raw(escapeForXml(ReadFixedString(64)));
+          $out->endTag('annotation');
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'OBJS') # objects
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('object', 'index' => $index++,
+                         'type' => ReadSint16(),
+                         'object_index' => ReadSint16(),
+                         'facing' => ReadSint16(),
+                         'polygon_index' => ReadSint16(),
+                         'location_x' => ReadSint16(),
+                         'location_y' => ReadSint16(),
+                         'location_z' => ReadSint16(),
+                         'flags' => ReadUint16(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'plac') # placement data
+      {
+        # First monsters, then items.
+        my $midOffset = CurOffset() + 64*12;
+        $midOffset = $endOffset if $midOffset > $endOffset;
+        
+        my $index = 0;
+        while (CurOffset() < $midOffset)
+        {
+          $out->emptyTag('monster_frequency', 'index' => $index++,
+                         'flags' => ReadUint16(),
+                         'initial_count' => ReadSint16(),
+                         'minimum_count' => ReadSint16(),
+                         'maximum_count' => ReadSint16(),
+                         'random_count' => ReadSint16(),
+                         'random_chance' => ReadUint16(),
+                         );
+           SetReadOffset($midOffset) if $SAMPLE;
+        }
+
+        $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('item_frequency', 'index' => $index++,
+                         'flags' => ReadUint16(),
+                         'initial_count' => ReadSint16(),
+                         'minimum_count' => ReadSint16(),
+                         'maximum_count' => ReadSint16(),
+                         'random_count' => ReadSint16(),
+                         'random_chance' => ReadUint16(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'PLAT') # platforms
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('platform', 'index' => $index++,
+                         'type' => ReadSint16(),
+                         'static_flags' => ReadUint32(),
+                         'speed' => ReadSint16(),
+                         'delay' => ReadSint16(),
+                         'minimum_floor_height' => ReadSint16(),
+                         'maximum_floor_height' => ReadSint16(),
+                         'minimum_ceiling_height' => ReadSint16(),
+                         'maximum_ceiling_height' => ReadSint16(),
+                         'polygon_index' => ReadSint16(),
+                         'dynamic_flags' => ReadUint16(),
+                         'floor_height' => ReadSint16(),
+                         'ceiling_height' => ReadSint16(),
+                         'ticks_until_restart' => ReadSint16(),
+                         genMultiList('endpoint_owner_', 8,
+                            '_first_polygon_index' => \&ReadSint16,
+                            '_polygon_index_count' => \&ReadSint16,
+                            '_first_line_index' => \&ReadSint16,
+                            '_line_index_count' => \&ReadSint16,
+                            ),
+                         'parent_platform_index' => ReadSint16(),
+                         'tag' => ReadSint16(),
+                         );
+          ReadPadding(44);
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'plat') # old platforms
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('platform', 'index' => $index++,
+                         'type' => ReadSint16(),
+                         'speed' => ReadSint16(),
+                         'delay' => ReadSint16(),
+                         'maximum_height' => ReadSint16(),
+                         'minimum_height' => ReadSint16(),
+                         'static_flags' => ReadUint32(),
+                         'polygon_index' => ReadSint16(),
+                         'tag' => ReadSint16(),
+                         );
+          ReadPadding(14);
           last if $SAMPLE;
         }
       }
@@ -243,116 +501,70 @@ for my $lev (0..scalar(@levels)-1)
           last if $SAMPLE;
         }
       }
-      elsif ($type eq 'NOTE') # annotations
+      elsif ($type eq 'term') # terminal data
       {
         my $index = 0;
         while (CurOffset() < $endOffset)
         {
-          $out->startTag('annotation', 'index' => $index++,
-                         'type' => ReadSint16(),
-                         'location_x' => ReadSint16(),
-                         'location_y' => ReadSint16(),
-                         'polygon_index' => ReadSint16(),
-                         );
-          $out->raw(escapeForXml(ReadFixedString(64)));
-          $out->endTag('annotation');
-          last if $SAMPLE;
-        }
-      }
-      elsif ($type eq 'medi') # media
-      {
-        my $index = 0;
-        while (CurOffset() < $endOffset)
-        {
-          $out->emptyTag('media', 'index' => $index++,
-                         'type' => ReadSint16(),
-                         'flags' => ReadUint16(),
-                         'light_index' => ReadSint16(),
-                         'current_direction' => ReadSint16(),
-                         'current_magnitude' => ReadSint16(),
-                         'low' => ReadSint16(),
-                         'high' => ReadSint16(),
-                         'origin_x' => ReadSint16(),
-                         'origin_y' => ReadSint16(),
-                         'height' => ReadSint16(),
-                         'minimum_light_intensity' => ReadFixed(),
-                         genShape('transparent_tex_', ReadUint16()),
-                         'transfer_mode' => ReadSint16(),
-                         );
-          ReadPadding(4);
-          last if $SAMPLE;
-        }
-      }
-      elsif ($type eq 'PLAT') # platforms
-      {
-        my $index = 0;
-        while (CurOffset() < $endOffset)
-        {
-          $out->emptyTag('platform', 'index' => $index++,
-                         'type' => ReadSint16(),
-                         'static_flags' => ReadUint32(),
-                         'speed' => ReadSint16(),
-                         'delay' => ReadSint16(),
-                         'minimum_floor_height' => ReadSint16(),
-                         'maximum_floor_height' => ReadSint16(),
-                         'minimum_ceiling_height' => ReadSint16(),
-                         'maximum_ceiling_height' => ReadSint16(),
-                         'polygon_index' => ReadSint16(),
-                         'dynamic_flags' => ReadUint16(),
-                         'floor_height' => ReadSint16(),
-                         'ceiling_height' => ReadSint16(),
-                         'ticks_until_restart' => ReadSint16(),
-                         genMultiList('endpoint_owner_', 8,
-                            '_first_polygon_index' => \&ReadSint16,
-                            '_polygon_index_count' => \&ReadSint16,
-                            '_first_line_index' => \&ReadSint16,
-                            '_line_index_count' => \&ReadSint16,
-                            ),
-                         'parent_platform_index' => ReadSint16(),
-                         'tag' => ReadSint16(),
-                         );
-          ReadPadding(44);
-          last if $SAMPLE;
-        }
-      }
-      elsif ($type eq 'plat') # old platforms
-      {
-        my $index = 0;
-        while (CurOffset() < $endOffset)
-        {
-          $out->emptyTag('platform', 'index' => $index++,
-                         'type' => ReadSint16(),
-                         'speed' => ReadSint16(),
-                         'delay' => ReadSint16(),
-                         'maximum_height' => ReadSint16(),
-                         'minimum_height' => ReadSint16(),
-                         'static_flags' => ReadUint32(),
-                         'polygon_index' => ReadSint16(),
-                         'tag' => ReadSint16(),
-                         );
-          ReadPadding(14);
-          last if $SAMPLE;
-        }
-      }
-      elsif ($type eq 'Minf') # static info
-      {
-        my $index = 0;
-        while (CurOffset() < $endOffset)
-        {
-          my @tags = (
-               'environment_code' => ReadSint16(),
-               'physics_model' => ReadSint16(),
-               'song_index' => ReadSint16(),
-               'mission_flags' => ReadSint16(),
-               'environment_flags' => ReadSint16(),
-                     );
-          ReadPadding(8);
-          $name = ReadFixedString(66);
-          push(@tags, 'entry_point_flags' => ReadUint32());
-          
-          $out->startTag('mapinfo', 'index' => $index++, @tags);
-          $out->raw(escapeForXml($name));
-          $out->endTag('mapinfo');
+          my $len = ReadUint16();
+          my $flags = ReadUint16();
+          my $lines = ReadSint16();
+          my $groups = ReadUint16();
+          my $fonts = ReadUint16();
+          $out->startTag('terminal', 'index' => $index++,
+                         'total_length' => $len,
+                         'flags' => $flags,
+                         'lines_per_page' => $lines,
+                         'grouping_count' => $groups,
+                         'font_changes_count' => $fonts);
+          for my $gidx (0..($groups - 1))
+          {
+            $out->emptyTag('grouping', 'index' => $gidx,
+                           'flags' => ReadSint16(),
+                           'type' => ReadSint16(),
+                           'permutation' => ReadSint16(),
+                           'start_index' => ReadSint16(),
+                           'length' => ReadSint16(),
+                           'maximum_line_count' => ReadSint16(),
+                           );
+          }
+          for my $fidx (0..($fonts - 1))
+          {
+            $out->emptyTag('font_change', 'index' => $fidx,
+                           'change_index' => ReadSint16(),
+                           'face' => ReadSint16(),
+                           'color' => ReadSint16(),
+                           );
+          }
+          my $headsize = 10 + (12*$groups) + (6*$fonts);
+          my $data = ReadRaw($len - $headsize);
+          if ($DECODE_TERM_TEXT)
+          {
+            my $dec = 'false';
+            if ($flags & 0x1)
+            {
+              $dec = 'true';
+              my $decoded = '';
+              for my $token (split(/(....)/, $data))
+              {
+                if (length($token) < 4)
+                {
+                  $decoded .= join('', map { chr(ord($_) ^ 0xfe) } split(//, $token));
+                }
+                else
+                {
+                  $decoded .= substr($token, 0, 2);
+                  $decoded .= chr(ord(substr($token, 2, 1)) ^ 0xfe);
+                  $decoded .= chr(ord(substr($token, 3, 1)) ^ 0xed);
+                }
+              }
+              $data = $decoded;
+            }
+            $out->startTag('text', 'decoded' => $dec);
+            $out->raw(escapeForXml($data));
+            $out->endTag('text');
+          }
+          $out->endTag('terminal');
           last if $SAMPLE;
         }
       }
@@ -485,18 +697,26 @@ sub genList {
   my ($prefix, $func, $ct) = @_;
   return genMultiList($prefix, $ct, '' => $func);
 }
-
 sub genMultiList {
   my ($prefix, $ct, @rest) = @_;
-  my @ret;
+  my @prefixes;
   for my $i (0..($ct - 1))
+  {
+    push(@prefixes, $prefix . $i);
+  }
+  return genNamedList(\@prefixes, @rest);
+}
+sub genNamedList {
+  my ($prefixes, @rest) = @_;
+  my @ret;
+  for my $prefix (@$prefixes)
   {
     my @parts = @rest;
     while (scalar @parts)
     {
       my $suffix = shift @parts;
       my $func = shift @parts;
-      push(@ret, $prefix . $i . $suffix, $func->());
+      push(@ret, $prefix . $suffix, $func->());
     }
   }
   return @ret;

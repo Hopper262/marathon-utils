@@ -22,11 +22,19 @@ mapxml2images.pl - Generate map previews for Marathon levels
     -margin     Pixels/points from edge to map point (default: 60)
     -dir        Output directory for files (default: working directory)
     -linewidth  Width of thick lines; thin lines are half width (default: 3)
-    -font       TTF font; required for annotations (default: no annotations)
-    -fontsize   Text size for map annotations (default: 26)
-    -nozoom     Zoom levels to fill image size (default: zoom)
+    -font       TTF font; required for annotations or legend (default: none)
+    -fontsize   Text size for map annotations and legend (default: 26)
+    -mark       Show points of interest, like terminals (default: no)
+    -marksize   Radius of PoI marks (default: 10)
+    -legend     Explain PoI marks at bottom of image (default: no)
+    -grid       Show grid behind map (default: no)
+    -gridsize   Spacing between grid lines, in WU (default: 4)
     -all        Show all lines and polygons, like a map editor (default: no)
     -ignore     File of polygons to ignore when drawing levels (default: none)
+    -nopoly     Hide polygons (default: show)
+    -noline     Hide lines (default: show)
+    -noanno     Hide annotations (default: show)
+    -zoom       Zoom levels to fill image size (default: no)
     -html       Output "preview.html" page (default: no)
     -scales     Output "scale.txt" information about images (default: no)
     -help, -?   Print this help message
@@ -40,9 +48,17 @@ our $HEIGHT = 1600;
 our $MARGIN = 60;
 our $OUTDIR = '.';
 our $LINEW = 3;
+our $MARK = 0;
+our $LEGEND = 0;
+our $RADIUS = 10;
 our $FONT = undef;
 our $FONTSIZE = 26;
-our $ZOOM = 1;
+our $GRID = 0;
+our $GRIDSIZE = 4;
+our $POLY = 1;
+our $LINE = 1;
+our $ANNO = 1;
+our $ZOOM = 0;
 our $SHOWALL = 0;
 our $OVERRIDES = undef;
 our $HTML = 0;
@@ -58,7 +74,15 @@ Getopt::Long::GetOptions(
   'linewidth=f' => \$LINEW,
   'font=s' => \$FONT,
   'fontsize=f' => \$FONTSIZE,
+  'mark!' => \$MARK,
+  'marksize=f' => \$RADIUS,
+  'legend!' => \$LEGEND,
+  'grid!' => \$GRID,
+  'gridsize=f' => \$GRIDSIZE,
   'ignore=s' => \$OVERRIDES,
+  'poly!' => \$POLY,
+  'line!' => \$LINE,
+  'anno!' => \$ANNO,
   'zoom!' => \$ZOOM,
   'all!' => \$SHOWALL,
   'html!' => \$HTML,
@@ -76,6 +100,7 @@ $OUTDIR = '.' unless defined($OUTDIR);
 mkdir $OUTDIR unless -d $OUTDIR;
 Pod::Usage::pod2usage(1) unless -d $OUTDIR;
 
+our $TWOPI = 8 * atan2(1, 1);
 our %COLORS = (
       'plain' => [ 0, 47/255, 0 ],
       'platform' => [ 117/255, 0, 0 ],
@@ -92,11 +117,22 @@ our %COLORS = (
       'line_elevation' => [ 0, 157/255, 0 ],
       'annotation' => [ 0, 255/255, 0 ],
       'landscape' => [ 37/255, 0, 37/255 ],
+      'shield_refuel' => [ 1, 0, 0 ],
+      'double_shield_refuel' => [ 1, 1, 0 ],
+      'triple_shield_refuel' => [ 1, 0, 1 ],
+      'pattern_buffer' => [ 1, 0.5, 0.25 ],
+      'computer_terminal' => [ 1, 1, 1 ],
+      'oxygen_refuel' => [ 0, 1, 1 ],
+      'block' => [ 0, 0, 0 ],
+      'grid' => [ 37/255, 37/255, 37/255 ],
       );
 our %LINEWIDTH = (
       'solid' => $LINEW,
       'elevation' => $LINEW/2,
+      'mark' => $RADIUS/2,
+      'markblock' => $RADIUS*3/4,
       'annotation' => $FONTSIZE,
+      'grid' => $LINEW/1.5,
       );
 
 # setup
@@ -113,6 +149,52 @@ if (defined $FONT)
 }
 
 our $M1_MODE = ($xml->{'wadinfo'}[0]{'type'} < 2);
+our @PANEL_TYPES;
+if ($M1_MODE)
+{
+  @PANEL_TYPES = qw(
+      oxygen_refuel shield_refuel double_shield_refuel
+      triple_shield_refuel light_switch platform_switch
+      pattern_buffer tag_switch computer_terminal tag_switch
+      double_shield_refuel triple_shield_refuel platform_switch
+      pattern_buffer
+    );
+}
+else
+{
+  @PANEL_TYPES = qw(
+      oxygen_refuel shield_refuel double_shield_refuel tag_switch
+      light_switch platform_switch tag_switch pattern_buffer
+      computer_terminal tag_switch
+
+      shield_refuel double_shield_refuel triple_shield_refuel
+      light_switch platform_switch tag_switch pattern_buffer
+      computer_terminal oxygen_refuel tag_switch tag_switch
+
+      shield_refuel double_shield_refuel triple_shield_refuel
+      light_switch platform_switch tag_switch pattern_buffer
+      computer_terminal oxygen_refuel tag_switch tag_switch
+
+      shield_refuel double_shield_refuel triple_shield_refuel
+      light_switch platform_switch tag_switch pattern_buffer
+      computer_terminal oxygen_refuel tag_switch tag_switch
+
+      shield_refuel double_shield_refuel triple_shield_refuel
+      light_switch platform_switch tag_switch pattern_buffer
+      computer_terminal oxygen_refuel tag_switch tag_switch
+    );
+}
+our @PANELS = qw(computer_terminal pattern_buffer
+                 shield_refuel double_shield_refuel triple_shield_refuel
+                 oxygen_refuel);
+our %PANEL_LABELS = (
+  'oxygen_refuel' => 'Oxygen',
+  'shield_refuel' => '1X shields',
+  'double_shield_refuel' => '2X shields',
+  'triple_shield_refuel' => '3X shields',
+  'pattern_buffer' => 'Save',
+  'computer_terminal' => 'Terminal',
+  );
 
 my @ignore_list;
 if (defined $OVERRIDES)
@@ -199,8 +281,10 @@ for my $levelnum (0..(scalar(@$entries)-1))
   $notes = FindChunk($level, 'NOTE') || [];
   $liquids = FindChunk($level, 'medi') || [];
   $ignores = $ignore_list[$levelnum] || {};
+  FixSides();
   
   # scale
+  my $pt_adj;
   do {
     my ($minx, $maxx, $miny, $maxy) = (-32768, 32767, -32768, 32767);
     if ($ZOOM)
@@ -238,19 +322,20 @@ for my $levelnum (0..(scalar(@$entries)-1))
     my $adjx = $cenx + ($WIDTH * 0.5 / $scale);
     my $adjy = $ceny + ($HEIGHT * 0.5 / $scale);
     
+    $pt_adj = sub {
+      my ($x, $y) = @_;
+      return (($x + $adjx) * $scale, ($y + $adjy) * $scale);
+    };
+
     for my $pt (@$points)
     {
-      $pt->{'x'} += $adjx;
-      $pt->{'x'} *= $scale;
-      $pt->{'y'} += $adjy;
-      $pt->{'y'} *= $scale;
+      ($pt->{'x'}, $pt->{'y'}) =
+        $pt_adj->($pt->{'x'}, $pt->{'y'});
     }
     for my $note (@$notes)
     {
-      $note->{'location_x'} += $adjx;
-      $note->{'location_x'} *= $scale;
-      $note->{'location_y'} += $adjy;
-      $note->{'location_y'} *= $scale;
+      ($note->{'location_x'}, $note->{'location_y'}) =
+        $pt_adj->($note->{'location_x'}, $note->{'location_y'});
     }
     print $scalefh sprintf("%d %d %f  # %s\n",
                            $adjx, $adjy, $scale, $levelname) if $scalefh;
@@ -276,114 +361,143 @@ for my $levelnum (0..(scalar(@$entries)-1))
     $cr->set_font_face($fface);
     $cr->set_font_size($FONTSIZE);
   }
-    
-  $cr->set_antialias('none');
-  for my $poly (@$polys)
+  
+  if ($GRID && $GRIDSIZE > 0.001)
   {
-    next if HiddenPoly($poly) && !$SHOWALL;
-    my $color = $COLORS{'plain'};
-    $color = $COLORS{'landscape'} if $SHOWALL && LandscapedPoly($poly);
-    $color = $COLORS{'teleporter'} if $poly->{'type'} == 10;    
-    if ($M1_MODE)
+    for (my $i = 0; $i <= 32/$GRIDSIZE; $i++)
     {
-      $color = $COLORS{'minor_ouch'} if $poly->{'type'} == 3;
-      $color = $COLORS{'major_ouch'} if $poly->{'type'} == 4;
-    }
-    else
-    {
-      $color = $COLORS{'hill'} if $poly->{'type'} == 3;
-      $color = $COLORS{'minor_ouch'} if $poly->{'type'} == 19;
-      $color = $COLORS{'major_ouch'} if $poly->{'type'} == 20;
-      if ($poly->{'media_index'} >= 0)
+      my $incr = $GRIDSIZE * 1024 * $i;
+
+      $cr->move_to($pt_adj->($incr, -32768));
+      $cr->line_to($pt_adj->($incr, 32768));
+      $cr->move_to($pt_adj->(-32768, $incr));
+      $cr->line_to($pt_adj->(32768, $incr));
+      if ($incr > 0)
       {
-        my $media = $liquids->[$poly->{'media_index'}];
-        if ($poly->{'floor_height'} < $media->{'low'})
-        {
-          $color = $COLORS{'water'} if $media->{'type'} == 0;
-          $color = $COLORS{'lava'} if $media->{'type'} == 1;
-          $color = $COLORS{'pfhor'} if $media->{'type'} == 2;
-          $color = $COLORS{'sewage'} if $media->{'type'} == 3;
-          $color = $COLORS{'jjaro'} if $media->{'type'} == 4;
-        }
+        $cr->move_to($pt_adj->(-$incr, -32768));
+        $cr->line_to($pt_adj->(-$incr, 32768));
+        $cr->move_to($pt_adj->(-32768, -$incr));
+        $cr->line_to($pt_adj->(32768, -$incr));
       }
     }
-    $color = $COLORS{'platform'} if $poly->{'type'} == 5 && !SecretPoly($poly);
-    $cr->set_source_rgb(@$color);
-  
-    $cr->move_to(Coords($poly->{'endpoint_index_0'}));
-    for my $i (1..($poly->{'vertex_count'} - 1))
-    {
-      $cr->line_to(Coords($poly->{'endpoint_index_' . $i}));
-    }
-    $cr->fill();
+    $cr->set_source_rgb(@{ $COLORS{'grid'} });
+    $cr->set_line_width($LINEWIDTH{'grid'});
+    $cr->stroke();
   }
-  $cr->set_antialias('default');
   
-  # Draw elevation lines before solid ones.
-  # This differs from Bungie's engine, but
-  # gives nicer-looking results.
-  for my $line (@$lines)
+  if ($POLY)
   {
-    my $cw = FindPoly($line->{'cw_poly'});
-    my $ccw = FindPoly($line->{'ccw_poly'});
-    unless ($SHOWALL)
+    $cr->set_antialias('none');
+    for my $poly (@$polys)
     {
-      next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
-                  ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
-    }
-  
-    my $solid = SolidLine($line);
-    my $landscaped = LandscapedLine($line);
-  
-    my $draw = 0;
-    if ($SHOWALL)
-    {
-      $draw = !$solid;
-    }
-    elsif (!$solid && !$landscaped)
-    {
-      $draw = 1 if $cw->{'floor_height'} != $ccw->{'floor_height'};
-    }
-    elsif ($solid && $landscaped)
-    {
-      $draw = 1 if ((!$cw || $cw->{'floor_transfer_mode'} != 9) &&
-                    (!$ccw || $ccw->{'floor_transfer_mode'} != 9));
-    }
-    
-    if ($draw)
-    {
-      $cr->move_to(Coords($line->{'endpoint1'}));
-      $cr->line_to(Coords($line->{'endpoint2'}));
-    }
-  }
-  $cr->set_source_rgb(@{ $COLORS{'line_elevation'} });
-  $cr->set_line_width($LINEWIDTH{'elevation'});
-  $cr->stroke();
+      next if HiddenPoly($poly) && !$SHOWALL;
+      my $color = $COLORS{'plain'};
+      $color = $COLORS{'landscape'} if $SHOWALL && LandscapedPoly($poly);
+      $color = $COLORS{'teleporter'} if $poly->{'type'} == 10;    
+      if ($M1_MODE)
+      {
+        $color = $COLORS{'minor_ouch'} if $poly->{'type'} == 3;
+        $color = $COLORS{'major_ouch'} if $poly->{'type'} == 4;
+      }
+      else
+      {
+        $color = $COLORS{'hill'} if $poly->{'type'} == 3;
+        $color = $COLORS{'minor_ouch'} if $poly->{'type'} == 19;
+        $color = $COLORS{'major_ouch'} if $poly->{'type'} == 20;
+        if ($poly->{'media_index'} >= 0)
+        {
+          my $media = $liquids->[$poly->{'media_index'}];
+          if ($poly->{'floor_height'} < $media->{'low'})
+          {
+            $color = $COLORS{'water'} if $media->{'type'} == 0;
+            $color = $COLORS{'lava'} if $media->{'type'} == 1;
+            $color = $COLORS{'pfhor'} if $media->{'type'} == 2;
+            $color = $COLORS{'sewage'} if $media->{'type'} == 3;
+            $color = $COLORS{'jjaro'} if $media->{'type'} == 4;
+          }
+        }
+      }
+      $color = $COLORS{'platform'} if $poly->{'type'} == 5 && !SecretPoly($poly);
+      $cr->set_source_rgb(@$color);
 
-  for my $line (@$lines)
-  {
-    my $cw = FindPoly($line->{'cw_poly'});
-    my $ccw = FindPoly($line->{'ccw_poly'});
-    unless ($SHOWALL)
-    {
-      next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
-                  ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
+      $cr->move_to(Coords($poly->{'endpoint_index_0'}));
+      for my $i (1..($poly->{'vertex_count'} - 1))
+      {
+        $cr->line_to(Coords($poly->{'endpoint_index_' . $i}));
+      }
+      $cr->fill();
     }
-    
-    my $solid = SolidLine($line);
-    my $landscaped = LandscapedLine($line);
-  
-    if ($solid && ($SHOWALL || !$landscaped))
-    {
-      $cr->move_to(Coords($line->{'endpoint1'}));
-      $cr->line_to(Coords($line->{'endpoint2'}));
-    }
+    $cr->set_antialias('default');
   }
-  $cr->set_source_rgb(@{ $COLORS{'line_solid'} });
-  $cr->set_line_width($LINEWIDTH{'solid'});
-  $cr->stroke();  
   
-  if ($fface)
+  if ($LINE)
+  {
+    # Draw elevation lines before solid ones.
+    # This differs from Bungie's engine, but
+    # gives nicer-looking results.
+    for my $line (@$lines)
+    {
+      my $cw = FindPoly($line->{'cw_poly'});
+      my $ccw = FindPoly($line->{'ccw_poly'});
+      unless ($SHOWALL)
+      {
+        next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
+                    ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
+      }
+  
+      my $solid = SolidLine($line);
+      my $landscaped = LandscapedLine($line);
+  
+      my $draw = 0;
+      if ($SHOWALL)
+      {
+        $draw = !$solid;
+      }
+      elsif (!$solid && !$landscaped)
+      {
+        $draw = 1 if $cw->{'floor_height'} != $ccw->{'floor_height'};
+      }
+      elsif ($solid && $landscaped)
+      {
+        $draw = 1 if ((!$cw || $cw->{'floor_transfer_mode'} != 9) &&
+                      (!$ccw || $ccw->{'floor_transfer_mode'} != 9));
+      }
+    
+      if ($draw)
+      {
+        $cr->move_to(Coords($line->{'endpoint1'}));
+        $cr->line_to(Coords($line->{'endpoint2'}));
+      }
+    }
+    $cr->set_source_rgb(@{ $COLORS{'line_elevation'} });
+    $cr->set_line_width($LINEWIDTH{'elevation'});
+    $cr->stroke();
+
+    for my $line (@$lines)
+    {
+      my $cw = FindPoly($line->{'cw_poly'});
+      my $ccw = FindPoly($line->{'ccw_poly'});
+      unless ($SHOWALL)
+      {
+        next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
+                    ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
+      }
+    
+      my $solid = SolidLine($line);
+      my $landscaped = LandscapedLine($line);
+  
+      if ($solid && ($SHOWALL || !$landscaped))
+      {
+        $cr->move_to(Coords($line->{'endpoint1'}));
+        $cr->line_to(Coords($line->{'endpoint2'}));
+      }
+    }
+    $cr->set_source_rgb(@{ $COLORS{'line_solid'} });
+    $cr->set_line_width($LINEWIDTH{'solid'});
+    $cr->stroke();  
+  }
+  
+  if ($ANNO && $fface)
   {
     for my $note (@$notes)
     {
@@ -391,6 +505,54 @@ for my $levelnum (0..(scalar(@$entries)-1))
       $cr->set_source_rgb(@{ $COLORS{'annotation'} });
       $cr->show_text($note->{'content'});
     }
+  }
+  
+  if ($MARK)
+  {
+    my (%panel_polys);
+    for my $side (@$sides)
+    {
+      if ($side->{'flags'} & 0x2)
+      {
+        my $poly = $polys->[$side->{'poly'}];
+        next if HiddenPoly($poly);
+        my $type = $PANEL_TYPES[$side->{'panel_type'}];
+        $panel_polys{$type}{$side->{'poly'}} = $lines->[$side->{'line'}];
+      }
+    }
+    my ($legend_x, $legend_y) = ($RADIUS*3, $HEIGHT - $RADIUS*2);
+    for my $ptype (@PANELS)
+    {
+      my $refs = $panel_polys{$ptype};
+      next unless $refs && scalar %$refs;
+      for my $line (values %$refs)
+      {
+        my ($x1, $y1) = Coords($line->{'endpoint1'});
+        my ($x2, $y2) = Coords($line->{'endpoint2'});
+        my ($cx, $cy) = (($x1 + $x2)/2, ($y1 + $y2)/2);
+
+        $cr->move_to($cx + $RADIUS, $cy);
+        $cr->arc($cx, $cy, $RADIUS, 0, $TWOPI);
+      }
+
+      my ($mx, $my) = ($legend_x + $RADIUS*2, $legend_y - $RADIUS);
+      $cr->move_to($mx + $RADIUS, $my);
+      $cr->arc($mx, $my, $RADIUS, 0, $TWOPI);
+      $legend_x += $RADIUS*5;
+
+      $cr->set_source_rgb(@{ $COLORS{'block'} });
+      $cr->set_line_width($LINEWIDTH{'markblock'});
+      $cr->stroke_preserve();
+      $cr->set_source_rgb(@{ $COLORS{$ptype} });
+      $cr->set_line_width($LINEWIDTH{'mark'});
+      $cr->stroke();
+      
+      my $label = $PANEL_LABELS{$ptype};
+      $cr->move_to($legend_x, $legend_y);
+      $cr->show_text($label);
+      my $extents = $cr->text_extents($label);
+      $legend_x += $extents->{'width'} + $RADIUS*5;      
+    }  
   }
   
   $cr->show_page();
@@ -420,6 +582,24 @@ sub FindChunk
     }
   }
   return undef;
+}
+
+sub FixSides
+{
+  for my $line (@$lines)
+  {
+    for my $dir ('cw', 'ccw')
+    {
+      my $poly_index = $line->{$dir . '_poly'};
+      my $side_index = $line->{$dir . '_side'};
+      if ($poly_index >= 0 && $side_index >= 0)
+      {
+        my $side = $sides->[$side_index];
+        $side->{'line'} = $line->{'index'};
+        $side->{'poly'} = $poly_index;
+      }
+    }
+  }
 }
 
 sub FindPoly

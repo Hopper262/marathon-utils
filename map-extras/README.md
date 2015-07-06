@@ -9,4 +9,8 @@ These hand-built files suppress polygons which will never end up on a player's a
 
 ### ProFontAO.ttf
 
-This font is used for map annotations within Aleph One itself and at lhowon.org.
+This font is used for map annotations within Aleph One itself.
+
+### commands.sh
+
+Shows the process and options used at lhowon.org. Will almost certainly fail if you run it as-is.
