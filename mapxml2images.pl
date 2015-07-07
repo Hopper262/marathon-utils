@@ -512,9 +512,11 @@ for my $levelnum (0..(scalar(@$entries)-1))
   {
     for my $note (@$notes)
     {
+      my $text = $note->{'content'};
+      next unless defined($text) && length($text);
       $cr->move_to($note->{'location_x'}, $note->{'location_y'});
       $cr->set_source_rgb(@{ $COLORS{'annotation'} });
-      $cr->show_text($note->{'content'});
+      $cr->show_text($text);
     }
   }
   
