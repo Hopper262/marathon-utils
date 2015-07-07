@@ -57,7 +57,7 @@ for my $i (0..$levelCount-1)
   {
     ReadPadding(10);
     $name = ReadFixedString(64);
-    ReadPadding(2);
+    ReadRaw(2, 1); # last padding may not exist
   }
   else
   {
