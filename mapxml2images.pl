@@ -35,6 +35,7 @@ mapxml2images.pl - Generate map previews for Marathon levels
     -noline     Hide lines (default: show)
     -noanno     Hide annotations (default: show)
     -zoom       Zoom levels to fill image size (default: no)
+    -solid      Draw black background (default: clear background)
     -html       Output "preview.html" page (default: no)
     -scales     Output "scale.txt" information about images (default: no)
     -help, -?   Print this help message
@@ -60,6 +61,7 @@ our $LINE = 1;
 our $ANNO = 1;
 our $ZOOM = 0;
 our $SHOWALL = 0;
+our $SOLID = 0;
 our $OVERRIDES = undef;
 our $HTML = 0;
 our $SCALES = 0;
@@ -85,6 +87,7 @@ Getopt::Long::GetOptions(
   'anno!' => \$ANNO,
   'zoom!' => \$ZOOM,
   'all!' => \$SHOWALL,
+  'solid!' => \$SOLID,
   'html!' => \$HTML,
   'scales!' => \$SCALES,
   'help|?' => \$HELP,
@@ -125,6 +128,7 @@ our %COLORS = (
       'oxygen_refuel' => [ 0, 1, 1 ],
       'block' => [ 0, 0, 0 ],
       'grid' => [ 37/255, 37/255, 37/255 ],
+      'background' => [ 0, 0, 0 ],
       );
 our %LINEWIDTH = (
       'solid' => $LINEW,
@@ -360,6 +364,13 @@ for my $levelnum (0..(scalar(@$entries)-1))
   {
     $cr->set_font_face($fface);
     $cr->set_font_size($FONTSIZE);
+  }
+  
+  if ($SOLID)
+  {
+    $cr->rectangle(0, 0, $WIDTH, $HEIGHT);
+    $cr->set_source_rgb(@{ $COLORS{'background'} });
+    $cr->fill();
   }
   
   if ($GRID && $GRIDSIZE > 0.001)
