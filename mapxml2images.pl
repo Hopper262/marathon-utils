@@ -320,11 +320,15 @@ for my $levelnum (0..(scalar(@$entries)-1))
     
     my $imgw = $WIDTH - 2*$MARGIN;
     my $imgh = $HEIGHT - 2*$MARGIN;
+    if ($LEGEND && $fface)
+    {
+      $imgh -= 2*$FONTSIZE;
+    }
     my $xscale = $imgw / $worldw;
     my $yscale = $imgh / $worldh;
     my $scale = ($xscale < $yscale) ? $xscale : $yscale;
-    my $adjx = $cenx + ($WIDTH * 0.5 / $scale);
-    my $adjy = $ceny + ($HEIGHT * 0.5 / $scale);
+    my $adjx = $cenx + (($MARGIN + $imgw/2) / $scale);
+    my $adjy = $ceny + (($MARGIN + $imgh/2) / $scale);
     
     $pt_adj = sub {
       my ($x, $y) = @_;
@@ -533,7 +537,8 @@ for my $levelnum (0..(scalar(@$entries)-1))
         $panel_polys{$type}{$side->{'poly'}} = $lines->[$side->{'line'}];
       }
     }
-    my ($legend_x, $legend_y) = ($RADIUS*3, $HEIGHT - $RADIUS*2);
+    my $legend_width = 0;
+    my @used_legends;
     for my $ptype (@PANELS)
     {
       my $refs = $panel_polys{$ptype};
@@ -547,12 +552,30 @@ for my $levelnum (0..(scalar(@$entries)-1))
         $cr->move_to($cx + $RADIUS, $cy);
         $cr->arc($cx, $cy, $RADIUS, 0, $TWOPI);
       }
+      $cr->set_source_rgb(@{ $COLORS{'block'} });
+      $cr->set_line_width($LINEWIDTH{'markblock'});
+      $cr->stroke_preserve();
+      $cr->set_source_rgb(@{ $COLORS{$ptype} });
+      $cr->set_line_width($LINEWIDTH{'mark'});
+      $cr->stroke();
 
+      push(@used_legends, $ptype);
+      my $extents = $cr->text_extents($PANEL_LABELS{$ptype});
+      $legend_width += $extents->{'width'} + $RADIUS*10;      
+    }    
+    
+    my $fextents = $cr->font_extents();
+    my ($fasc, $fdesc) = ($fextents->{'ascent'}, $fextents->{'descent'});    
+    
+    my $legend_x = ($WIDTH - $legend_width)/2 + $RADIUS*2.5;
+    my $legend_y = $HEIGHT - ($FONTSIZE*2 - $fasc - $fdesc)/2 - $fdesc;
+    for my $ptype (@used_legends)
+    {
       my ($mx, $my) = ($legend_x + $RADIUS*2, $legend_y - $RADIUS);
       $cr->move_to($mx + $RADIUS, $my);
       $cr->arc($mx, $my, $RADIUS, 0, $TWOPI);
       $legend_x += $RADIUS*5;
-
+      
       $cr->set_source_rgb(@{ $COLORS{'block'} });
       $cr->set_line_width($LINEWIDTH{'markblock'});
       $cr->stroke_preserve();
@@ -565,7 +588,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
       $cr->show_text($label);
       my $extents = $cr->text_extents($label);
       $legend_x += $extents->{'width'} + $RADIUS*5;      
-    }  
+    }
   }
   
   $cr->show_page();
