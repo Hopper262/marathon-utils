@@ -51,6 +51,7 @@ our @font_faces = (
   );
 our %metrics = (
   'size' => 12,
+  'cwidth' => 7,
   );
 
 1;

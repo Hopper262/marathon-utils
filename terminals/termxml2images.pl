@@ -448,8 +448,14 @@ sub FillRect
 
 sub TextWidth
 {
-  my ($font, $text) = @_;
+  my ($font, $text, $measuring) = @_;
   
+  if ($measuring && $MODE eq 'classic')
+  {
+    my $w = $metrics{'cwidth_' . $FORMAT} || $metrics{'cwidth'};
+    return $w * length($text);
+  }
+
   my $width = 0;
   for my $char (split(//, $text))
   {
@@ -464,7 +470,7 @@ sub StyledLineWidth
   my $width = 0;
   for my $run (@$runs)
   {
-    $width += TextWidth(StyleFont($run), $run->{'text'});
+    $width += TextWidth(StyleFont($run), $run->{'text'}, 1);
   }
   return $width;
 }
@@ -695,25 +701,20 @@ sub WrapLine
   my $width = 0;
   my $chars = 0;
   my $break = 0;
-  my $was_space = 0;
   ALL: for my $run (@$runs)
   {
     for my $char (split(//, $run->{'text'}))
     {
-      if ($char eq ' ')
-      {
-        $break = $chars unless $was_space;
-        $was_space = 1;
-        $width += TextWidth(StyleFont($run), $char);
-      }
-      else
-      {
-        $was_space = 0;
-        $width += TextWidth(StyleFont($run), $char);
-        last ALL if $width > $line_width;
-      }
+      $break = $chars if $char eq ' ';
+      $width += TextWidth(StyleFont($run), $char, 1);
+      last ALL if $width > $line_width;
       $chars++;
-      $break = $chars if $char eq '-';
+      ## I have no idea how many characters allow breaks.
+      ## These are the ones I've spotted in the wild.
+      $break = $chars if $char eq ' ' ||
+                         $char eq '-' ||
+                         $char eq '<' ||
+                         $char eq '*';
     }
   }
   
@@ -729,9 +730,14 @@ sub WrapLine
   my $run = shift @queue;
   my $tleft = substr($run->{'text'}, 0, $split);
   my $tright = substr($run->{'text'}, $split);
-  $tright =~ s/^ +//;
   push(@new_runs, { %$run, 'text' => $tleft });
   unshift(@queue, { %$run, 'text' => $tright });
+  
+  # trim leading spaces past our soft break
+  while (scalar(@queue) && $queue[0]{'text'} =~ s/^ +//)
+  {
+    shift @queue unless length $queue[0]{'text'};
+  }
   return (\@new_runs, WrapLine($line_width, \@queue));
 }
 
