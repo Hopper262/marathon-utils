@@ -2,12 +2,13 @@
 use strict;
 use warnings 'FATAL' => 'all';
 use XML::Writer ();
+use MIME::Base64 ();
 use Encode ();
 use Carp;
 use bytes;
 
 our $SAMPLE = 0;
-our $DECODE_TERM_TEXT = 0;
+our $DECODE_TERM_TEXT = 1;
 
 my $out = XML::Writer->new('DATA_MODE' => 1, 'DATA_INDENT' => '  ', 'ENCODING' => 'us-ascii', 'UNSAFE' => 1);
 $out->startTag('wadfile');
@@ -561,7 +562,7 @@ for my $lev (0..scalar(@levels)-1)
               $data = $decoded;
             }
             $out->startTag('text', 'decoded' => $dec);
-            $out->raw(escapeForXml($data));
+            $out->characters(MIME::Base64::encode_base64($data));
             $out->endTag('text');
           }
           $out->endTag('terminal');
