@@ -117,9 +117,9 @@ for my $levelnum (0..(scalar(@$entries)-1))
   my $levelname = $infochunk->[0]{'content'} || '(unnamed)';
   warn "Processing $levelnum. $levelname\n";
 
-  my $status = 0;
   for my $sinfo (@{ FindChunk($level, 'term') || [] })
   {
+    my $status = 0;
     my $rawtext = MIME::Base64::decode_base64($sinfo->{'text'}[0]{'content'});
     my %pages = ();
     for my $ginfo (@{ $sinfo->{'grouping'} || [] })
