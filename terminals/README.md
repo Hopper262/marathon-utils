@@ -26,3 +26,7 @@ Generates a set of HTML files to navigate the terminal images. Use after termxml
     cd terminals
     ../html_preview.pl "Marathon Infinity" < infinity.xml
     open index.html
+
+### termxml2locations.pl
+
+Reads a map file in XML format and outputs terminal locations. Used on lhowon.org to create clickable hotspots on level maps.
