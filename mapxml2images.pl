@@ -126,6 +126,7 @@ our %COLORS = (
       'pattern_buffer' => [ 1, 0.5, 0.25 ],
       'computer_terminal' => [ 1, 1, 1 ],
       'oxygen_refuel' => [ 0, 1, 1 ],
+      'player_start' => [ 0, 0.5, 1 ],
       'block' => [ 0, 0, 0 ],
       'grid' => [ 37/255, 37/255, 37/255 ],
       'background' => [ 0, 0, 0 ],
@@ -198,6 +199,7 @@ our %PANEL_LABELS = (
   'triple_shield_refuel' => '3X shields',
   'pattern_buffer' => 'Save',
   'computer_terminal' => 'Terminal',
+  'player_start' => 'Player start',
   );
 
 my @ignore_list;
@@ -268,7 +270,7 @@ img {
 END
 }
 
-our ($points, $lines, $sides, $polys, $platforms, $notes, $liquids, $ignores);
+our ($points, $lines, $sides, $polys, $platforms, $notes, $liquids, $objects, $ignores);
 for my $levelnum (0..(scalar(@$entries)-1))
 {
   my $level = $entries->[$levelnum];
@@ -288,6 +290,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
   $platforms = FindChunk($level, 'plat') || FindChunk($level, 'PLAT');
   $notes = FindChunk($level, 'NOTE') || [];
   $liquids = FindChunk($level, 'medi') || [];
+  $objects = FindChunk($level, 'OBJS') || [];
   $ignores = $ignore_list[$levelnum] || {};
   FixSides();
   
@@ -348,6 +351,11 @@ for my $levelnum (0..(scalar(@$entries)-1))
     {
       ($note->{'location_x'}, $note->{'location_y'}) =
         $pt_adj->($note->{'location_x'}, $note->{'location_y'});
+    }
+    for my $obj (@$objects)
+    {
+      ($obj->{'location_x'}, $obj->{'location_y'}) =
+        $pt_adj->($obj->{'location_x'}, $obj->{'location_y'});
     }
     print $scalefh sprintf("%d %d %f  # %s\n",
                            $adjx, $adjy, $scale, $levelname) if $scalefh;
@@ -532,29 +540,72 @@ for my $levelnum (0..(scalar(@$entries)-1))
   
   if ($MARK)
   {
-    my (%panel_polys);
+    my $starttype = 'player_start';
+    my %marks = map { $_ => [] } (@PANELS, $starttype);
+    
     for my $side (@$sides)
     {
       if ($side->{'flags'} & 0x2)
       {
         my $poly = $polys->[$side->{'poly'}];
         next if HiddenPoly($poly);
-        my $type = $PANEL_TYPES[$side->{'panel_type'}];
-        $panel_polys{$type}{$side->{'poly'}} = $lines->[$side->{'line'}];
-      }
-    }
-    my $legend_width = 0;
-    my @used_legends;
-    for my $ptype (@PANELS)
-    {
-      my $refs = $panel_polys{$ptype};
-      next unless $refs && scalar %$refs;
-      for my $line (values %$refs)
-      {
+        my $line = $lines->[$side->{'line'}];
         my ($x1, $y1) = Coords($line->{'endpoint1'});
         my ($x2, $y2) = Coords($line->{'endpoint2'});
         my ($cx, $cy) = (($x1 + $x2)/2, ($y1 + $y2)/2);
+       
+        my $type = $PANEL_TYPES[$side->{'panel_type'}];
+        push(@{ $marks{$type} }, [ $cx, $cy ]);
+      }
+    }
+    for my $obj (@$objects)
+    {
+      next unless $obj->{'type'} == 3;
+      next if HiddenPoly($polys->[$obj->{'polygon_index'}]);
+      push(@{ $marks{$starttype} },
+            [ $obj->{'location_x'}, $obj->{'location_y'},
+              $obj->{'facing'} * $TWOPI / 512 ]);
+    }
+    
+    my $legend_width = 0;
+    my @used_legends;
+    for my $ptype ($starttype)
+    {
+      my $refs = $marks{$ptype};
+      next unless $refs && scalar @$refs;
+      for my $pos (@$refs)
+      {
+        my ($cx, $cy, $facing) = @$pos;
+        $cr->save();
+        $cr->translate($cx, $cy);
+        $cr->rotate($facing + $TWOPI/4);
+        $cr->move_to(0, 0 - $RADIUS);
+        $cr->line_to($RADIUS/2, $RADIUS);
+        $cr->line_to(-$RADIUS/2, $RADIUS);
+        $cr->close_path();
+        $cr->restore();
+        
+        $cr->set_source_rgb(@{ $COLORS{'block'} });
+        $cr->set_line_width($LINEWIDTH{'markblock'});
+        $cr->stroke_preserve();
+        $cr->set_source_rgb(@{ $COLORS{$starttype} });
+        $cr->set_line_width($LINEWIDTH{'mark'});
+        $cr->stroke_preserve();
+        $cr->fill();
+      }
+      
+      push(@used_legends, $starttype);
+      my $extents = $cr->text_extents($PANEL_LABELS{$starttype});
+      $legend_width += $extents->{'width'} + $RADIUS*10;      
+    }
 
+    for my $ptype (@PANELS)
+    {
+      my $refs = $marks{$ptype};
+      next unless $refs && scalar @$refs;
+      for my $pos (@$refs)
+      {
+        my ($cx, $cy) = @$pos;
         $cr->move_to($cx + $RADIUS, $cy);
         $cr->arc($cx, $cy, $RADIUS, 0, $TWOPI);
       }
@@ -578,16 +629,35 @@ for my $levelnum (0..(scalar(@$entries)-1))
     for my $ptype (@used_legends)
     {
       my ($mx, $my) = ($legend_x + $RADIUS*2, $legend_y - $RADIUS);
-      $cr->move_to($mx + $RADIUS, $my);
-      $cr->arc($mx, $my, $RADIUS, 0, $TWOPI);
-      $legend_x += $RADIUS*5;
+      if ($ptype eq $starttype)
+      {
+        $cr->move_to($mx, $my - $RADIUS);
+        $cr->line_to($mx + $RADIUS/2, $my + $RADIUS);
+        $cr->line_to($mx - $RADIUS/2, $my + $RADIUS);
+        $cr->close_path();
+        $legend_x += $RADIUS*5;
+       
+        $cr->set_source_rgb(@{ $COLORS{'block'} });
+        $cr->set_line_width($LINEWIDTH{'markblock'});
+        $cr->stroke_preserve();
+        $cr->set_source_rgb(@{ $COLORS{$ptype} });
+        $cr->set_line_width($LINEWIDTH{'mark'});
+        $cr->stroke_preserve();
+        $cr->fill();
+      }
+      else
+      {
+        $cr->move_to($mx + $RADIUS, $my);
+        $cr->arc($mx, $my, $RADIUS, 0, $TWOPI);
+        $legend_x += $RADIUS*5;
       
-      $cr->set_source_rgb(@{ $COLORS{'block'} });
-      $cr->set_line_width($LINEWIDTH{'markblock'});
-      $cr->stroke_preserve();
-      $cr->set_source_rgb(@{ $COLORS{$ptype} });
-      $cr->set_line_width($LINEWIDTH{'mark'});
-      $cr->stroke();
+        $cr->set_source_rgb(@{ $COLORS{'block'} });
+        $cr->set_line_width($LINEWIDTH{'markblock'});
+        $cr->stroke_preserve();
+        $cr->set_source_rgb(@{ $COLORS{$ptype} });
+        $cr->set_line_width($LINEWIDTH{'mark'});
+        $cr->stroke();
+      }
       
       my $label = $PANEL_LABELS{$ptype};
       $cr->move_to($legend_x, $legend_y);
