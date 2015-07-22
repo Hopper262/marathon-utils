@@ -11,6 +11,10 @@ This script detects potentially unreachable polygons and outputs a text file for
 
 These hand-edited files suppress polygons not automatically detected by the above script.
 
+### mapxml2info.pl
+
+This script outputs some summary statistics about each level in the map, including number of polygons and a simple reachable-area calculation.
+
 ### ProFontAO.ttf
 
 This font is used for map annotations within Aleph One itself.
