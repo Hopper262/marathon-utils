@@ -1,14 +1,16 @@
-4: 0 32-59 89
-5: 0-59
-10: 0 32-59 89
-13: 0
-14: 597 598
-15: 0
-19: 0
-22: 64 110 134-186
-23: 137-142
-32: 136-141
-34: 0-59
-45: 0
-47: 0
-52: 0-59
+  4: 0 32-59 89           # Electric Sheep One
+  5: 0-59                 # Where are monsters in dreams
+ 10: 0 32-59 89           # Electric Sheep Two
+ 13: 0                    # Foe Hammer
+ 14: 597-598              # Hang Brain
+ 15: 0                    # Electric Sheep Three
+ 19: 0                    # A Converted Church in Venice, Italy
+ 22: 64 110 134-186       # Bagged Again
+ 23: 137-142              # You Think You’re Big Time? You’re Gonna Die Big Time!
+ 27: 312-315 493-495      # Aie Mak Sicur
+ 28: 312-315 493-495      # Carroll Street Station
+ 32: 136-141              # You Think You’re Big Time? You’re Gonna Die Big Time!
+ 34: 0-59                 # Thrud
+ 45: 0                    # Route 66
+ 47: 0                    # Route 66 (604 or better)
+ 52: 0-59                 # Who's Got The Itchies

@@ -208,7 +208,7 @@ if (defined $OVERRIDES)
   while (my $line = <$overfh>)
   {
     chomp $line;
-    next unless $line =~ s/^(\d+):\s+//;
+    next unless $line =~ s/^\s*(\d+):\s+//;
     my $levnum = $1;
     
     my %hashed;
@@ -224,6 +224,10 @@ if (defined $OVERRIDES)
       elsif ($poly =~ /^(\d+)$/)
       {
         $hashed{$1} = 1;
+      }
+      else
+      {
+        last;  # stop processing at unrecognized data
       }
     }
     $ignore_list[$levnum] = { %hashed };
