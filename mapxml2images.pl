@@ -32,7 +32,8 @@ mapxml2images.pl - Generate map previews for Marathon levels
     -all        Show all lines and polygons, like a map editor (default: no)
     -ignore     File of polygons to ignore when drawing levels (default: none)
     -nopoly     Hide polygons (default: show)
-    -noline     Hide lines (default: show)
+    -nofilled   Hide lines attached to polygons (default: show)
+    -nounfilled Hide unattached lines in "-all" mode (default: show)
     -noanno     Hide annotations (default: show)
     -zoom       Zoom levels to fill image size (default: no)
     -solid      Draw black background (default: clear background)
@@ -57,7 +58,8 @@ our $FONTSIZE = 26;
 our $GRID = 0;
 our $GRIDSIZE = 4;
 our $POLY = 1;
-our $LINE = 1;
+our $LINE_FILLED = 1;
+our $LINE_UNFILLED = 1;
 our $ANNO = 1;
 our $ZOOM = 0;
 our $SHOWALL = 0;
@@ -83,7 +85,8 @@ Getopt::Long::GetOptions(
   'gridsize=f' => \$GRIDSIZE,
   'ignore=s' => \$OVERRIDES,
   'poly!' => \$POLY,
-  'line!' => \$LINE,
+  'filled!' => \$LINE_FILLED,
+  'unfilled!' => \$LINE_UNFILLED,
   'anno!' => \$ANNO,
   'zoom!' => \$ZOOM,
   'all!' => \$SHOWALL,
@@ -457,7 +460,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
     $cr->set_antialias('default');
   }
   
-  if ($LINE)
+  if ($LINE_FILLED || $LINE_UNFILLED)
   {
     # Draw elevation lines before solid ones.
     # This differs from Bungie's engine, but
@@ -470,6 +473,14 @@ for my $levelnum (0..(scalar(@$entries)-1))
       {
         next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
                     ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
+      }
+      if (!$LINE_FILLED)
+      {
+        next if $cw || $ccw;
+      }
+      if (!$LINE_UNFILLED)
+      {
+        next unless $cw || $ccw;
       }
   
       my $solid = SolidLine($line);
@@ -508,6 +519,14 @@ for my $levelnum (0..(scalar(@$entries)-1))
       {
         next unless ($cw && !UnseenPoly($cw) && !IgnoredPoly($cw)) ||
                     ($ccw && !UnseenPoly($ccw) && !IgnoredPoly($ccw));
+      }
+      if (!$LINE_FILLED)
+      {
+        next if $cw || $ccw;
+      }
+      if (!$LINE_UNFILLED)
+      {
+        next unless $cw || $ccw;
       }
     
       my $solid = SolidLine($line);
