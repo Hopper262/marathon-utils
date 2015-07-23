@@ -295,7 +295,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
   FixSides();
   
   # scale
-  my $pt_adj;
+  my ($pt_adj, $scale);
   do {
     my ($minx, $maxx, $miny, $maxy) = (-32768, 32767, -32768, 32767);
     if ($ZOOM)
@@ -333,7 +333,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
     }
     my $xscale = $imgw / $worldw;
     my $yscale = $imgh / $worldh;
-    my $scale = ($xscale < $yscale) ? $xscale : $yscale;
+    $scale = ($xscale < $yscale) ? $xscale : $yscale;
     my $adjx = $cenx + (($MARGIN + $imgw/2) / $scale);
     my $adjy = $ceny + (($MARGIN + $imgh/2) / $scale);
     
@@ -664,6 +664,51 @@ for my $levelnum (0..(scalar(@$entries)-1))
       $cr->show_text($label);
       my $extents = $cr->text_extents($label);
       $legend_x += $extents->{'width'} + $RADIUS*5;      
+    }
+    
+    # scale reference
+    if (1) {
+      my $slen = 2;
+      my $realw;
+      while (1)
+      {
+        $realw = $slen * 1024 * $scale;
+        last if $realw >= ($RADIUS*8);
+        $slen += 2;
+      }
+      if ($slen == 2 && $realw > ($RADIUS*20))
+      {
+        $slen = 1;
+        $realw /= 2;
+      }
+        
+      
+      $legend_x = $WIDTH - $RADIUS*5;
+      
+      $cr->move_to($legend_x - $realw, $legend_y - $fasc/2);
+      $cr->line_to($legend_x, $legend_y - $fasc/2);
+      $cr->move_to($legend_x - $realw, $legend_y - $fasc);
+      $cr->line_to($legend_x - $realw, $legend_y);
+      $cr->move_to($legend_x, $legend_y - $fasc);
+      $cr->line_to($legend_x, $legend_y);
+      $cr->move_to($legend_x - $realw/2, $legend_y - $fasc);
+      $cr->line_to($legend_x - $realw/2, $legend_y);
+      $cr->set_source_rgb(@{ $COLORS{'line_solid'} });
+      $cr->set_line_width($LINEWIDTH{'solid'});
+      $cr->stroke();
+      $cr->move_to($legend_x - $realw/4, $legend_y - $fasc);
+      $cr->line_to($legend_x - $realw/4, $legend_y);
+      $cr->move_to($legend_x - 3*$realw/4, $legend_y - $fasc);
+      $cr->line_to($legend_x - 3*$realw/4, $legend_y);
+      $cr->set_source_rgb(@{ $COLORS{'line_elevation'} });
+      $cr->set_line_width($LINEWIDTH{'elevation'});
+      $cr->stroke();
+      
+      my $label = sprintf('%s WU', $slen);
+      my $labelw = $cr->text_extents($label)->{'width'};
+      $cr->move_to($legend_x - $realw - $RADIUS - $labelw, $legend_y);
+      $cr->set_source_rgb(@{ $COLORS{'annotation'} });
+      $cr->show_text($label);
     }
   }
   
