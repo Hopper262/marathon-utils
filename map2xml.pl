@@ -25,7 +25,7 @@ my $levelCount = ReadUint16();
 my $appSpecificSize = ReadUint16();
 my $entrySize = ReadUint16();
 my $dirEntrySize = ReadUint16() + $appSpecificSize;
-ReadPadding(4); # parent checksum 
+ReadPadding(4); # parent checksum
 ReadPadding(40); # unused
 
 my $M1_MODE = 0;
@@ -569,6 +569,251 @@ for my $lev (0..scalar(@levels)-1)
           last if $SAMPLE;
         }
       }
+      elsif ($type eq 'MNpx') # Monster definitions
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('monster_definition', 'index' => $index++,
+                         'collection' => ReadSint16(),
+                         'vitality' => ReadSint16(),
+                         'immunities' => ReadUint32(),
+                         'weaknesses' => ReadUint32(),
+                         'flags' => ReadUint32(),
+                         
+                         'class' => ReadUint32(),
+                         'friends' => ReadUint32(),
+                         'enemies' => ReadUint32(),
+                         
+                         'sound_pitch' => ReadFixed(),
+                         'activation_sound' => ReadSint16(),
+                         'friendly_activation_sound' => ReadSint16(),
+                         'clear_sound' => ReadSint16(),
+                         'kill_sound' => ReadSint16(),
+                         'apology_sound' => ReadSint16(),
+                         'friendly_fire_sound' => ReadSint16(),
+                         'flaming_sound' => ReadSint16(),
+                         'random_sound' => ReadSint16(),
+                         'random_sound_mask' => ReadUint16(),
+                         
+                         'carrying_item_type' => ReadSint16(),
+                         
+                         'radius' => ReadWorldDistance(),
+                         'height' => ReadWorldDistance(),
+                         'preferred_hover_height' => ReadWorldDistance(),
+                         'minimum_ledge_delta' => ReadWorldDistance(),
+                         'maximum_ledge_delta' => ReadWorldDistance(),
+                         'external_velocity_scale' => ReadFixed(),
+                         'impact_effect' => ReadSint16(),
+                         'melee_impact_effect' => ReadSint16(),
+                         'contrail_effect' => ReadSint16(),
+                         
+                         'half_visual_arc' => ReadSint16(),
+                         'half_vertical_visual_arc' => ReadSint16(),
+                         'visual_range' => ReadWorldDistance(),
+                         'dark_visual_range' => ReadWorldDistance(),
+                         'intelligence' => ReadSint16(),
+                         'speed' => ReadSint16(),
+                         'gravity' => ReadSint16(),
+                         'terminal_velocity' => ReadSint16(),
+                         'door_retry_mask' => ReadUint16(),
+                         'shrapnel_radius' => ReadSint16(),
+                         
+                         'shrapnel_damage_type' => ReadSint16(),
+                         'shrapnel_damage_flags' => ReadUint16(),
+                         'shrapnel_damage_base' => ReadSint16(),
+                         'shrapnel_damage_random' => ReadSint16(),
+                         'shrapnel_damage_scale' => ReadFixed(),
+                         
+                         genShape('hit_shapes_' => ReadUint16()),
+                         genShape('hard_dying_shape_' => ReadUint16()),
+                         genShape('soft_dying_shape_' => ReadUint16()),
+                         genShape('hard_dead_shapes_' => ReadUint16()),
+                         genShape('soft_dead_shapes_' => ReadUint16()),
+                         genShape('stationary_shape_' => ReadUint16()),
+                         genShape('moving_shape_' => ReadUint16()),
+                         genShape('teleport_in_shape_' => ReadUint16()),
+                         genShape('teleport_out_shape_' => ReadUint16()),
+                         
+                         'attack_frequency' => ReadSint16(),
+                         
+                         'melee_attack_type' => ReadSint16(),
+                         'melee_attack_repetitions' => ReadSint16(),
+                         'melee_attack_error' => ReadSint16(),
+                         'melee_attack_range' => ReadWorldDistance(),
+                         genShape('melee_attack_shape_' => ReadUint16()),
+                         'melee_attack_dx' => ReadWorldDistance(),
+                         'melee_attack_dy' => ReadWorldDistance(),
+                         'melee_attack_dz' => ReadWorldDistance(),
+
+                         'ranged_attack_type' => ReadSint16(),
+                         'ranged_attack_repetitions' => ReadSint16(),
+                         'ranged_attack_error' => ReadSint16(),
+                         'ranged_attack_range' => ReadWorldDistance(),
+                         genShape('ranged_attack_shape_' => ReadUint16()),
+                         'ranged_attack_dx' => ReadWorldDistance(),
+                         'ranged_attack_dy' => ReadWorldDistance(),
+                         'ranged_attack_dz' => ReadWorldDistance(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'FXpx') # Effect definitions
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('effect_definition', 'index' => $index++,
+                         'collection' => ReadSint16(),
+                         'shape' => ReadSint16(),
+                         'sound_pitch' => ReadFixed(),
+                         'flags' => ReadUint16(),
+                         'delay' => ReadSint16(),
+                         'delay_sound' => ReadSint16(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'PRpx') # Projectile definitions
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('projectile_definition', 'index' => $index++,
+                         'collection' => ReadSint16(),
+                         'shape' => ReadSint16(),
+                         'detonation_effect' => ReadSint16(),
+                         'media_detonation_effect' => ReadSint16(),
+                         'contrail_effect' => ReadSint16(),
+                         'ticks_between_contrails' => ReadSint16(),
+                         'maximum_contrails' => ReadSint16(),
+                         'media_projectile_promotion' => ReadSint16(),
+                         
+                         'radius' => ReadWorldDistance(),
+                         'area_of_effect' => ReadWorldDistance(),
+                         
+                         'damage_type' => ReadSint16(),
+                         'damage_flags' => ReadSint16(),
+                         'damage_base' => ReadSint16(),
+                         'damage_random' => ReadSint16(),
+                         'damage_scale' => ReadFixed(),
+                         
+                         'flags' => ReadUint32(),
+                         'speed' => ReadWorldDistance(),
+                         'maximum_range' => ReadWorldDistance(),
+                         
+                         'sound_pitch' => ReadFixed(),
+                         'flyby_sound' => ReadSint16(),
+                         'rebound_sound' => ReadSint16(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'PXpx') # Physics constants
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->emptyTag('physics_constants', 'index' => $index++,
+                         'maximum_forward_velocity' => ReadFixed(),
+                         'maximum_backward_velocity' => ReadFixed(),
+                         'maximum_perpendicular_velocity' => ReadFixed(),
+                         'acceleration' => ReadFixed(),
+                         'deceleration' => ReadFixed(),
+                         'airborne_deceleration' => ReadFixed(),
+                         'gravitational_acceleration' => ReadFixed(),
+                         'climbing_acceleration' => ReadFixed(),
+                         'terminal_velocity' => ReadFixed(),
+                         'external_deceleration' => ReadFixed(),
+                         
+                         'angular_acceleration' => ReadFixed(),
+                         'angular_deceleration' => ReadFixed(),
+                         'maximum_angular_velocity' => ReadFixed(),
+                         'angular_recentering_velocity' => ReadFixed(),
+                         'fast_angular_velocity' => ReadFixed(),
+                         'fast_angular_maximum' => ReadFixed(),
+                         'maximum_elevation' => ReadFixed(),
+                         'external_angular_deceleration' => ReadFixed(),
+                         
+                         'step_delta' => ReadFixed(),
+                         'step_amplitude' => ReadFixed(),
+                         'radius' => ReadFixed(),
+                         'height' => ReadFixed(),
+                         'dead_height' => ReadFixed(),
+                         'camera_height' => ReadFixed(),
+                         'splash_height' => ReadFixed(),
+                         
+                         'half_camera_separation' => ReadFixed(),
+                         );
+          last if $SAMPLE;
+        }
+      }
+      elsif ($type eq 'WPpx') # Weapons definitions
+      {
+        my $index = 0;
+        while (CurOffset() < $endOffset)
+        {
+          $out->startTag('weapon_definition', 'index' => $index++,
+                         'item_type' => ReadSint16(),
+                         'powerup_type' => ReadSint16(),
+                         'weapon_class' => ReadSint16(),
+                         'flags' => ReadUint16(),
+                         
+                         'firing_light_intensity' => ReadFixed(),
+                         'firing_light_intensity_decay_ticks' => ReadSint16(),
+                         
+                         'idle_height' => ReadFixed(),
+                         'bob_amplitude' => ReadFixed(),
+                         'kick_height' => ReadFixed(),
+                         'reload_height' => ReadFixed(),
+                         'idle_width' => ReadFixed(),
+                         'horizontal_amplitude' => ReadFixed(),
+                         
+                         'collection' => ReadSint16(),
+                         'idle_shape' => ReadSint16(),
+                         'firing_shape' => ReadSint16(),
+                         'reloading_shape' => ReadSint16(),
+                         (ReadPadding(2) ? () : ()),
+                         'charging_shape' => ReadSint16(),
+                         'charged_shape' => ReadSint16(),
+                         
+                         'ready_ticks' => ReadSint16(),
+                         'await_reload_ticks' => ReadSint16(),
+                         'loading_ticks' => ReadSint16(),
+                         'finish_loading_ticks' => ReadSint16(),
+                         'powerup_ticks' => ReadSint16(),
+                         );
+          for my $trigger (0, 1)
+          {
+            $out->emptyTag('trigger_definition', 'index' => $trigger,
+                           'rounds_per_magazine' => ReadSint16(),
+                           'ammunition_type' => ReadSint16(),
+                           'ticks_per_round' => ReadSint16(),
+                           'recovery_ticks' => ReadSint16(),
+                           'charging_ticks' => ReadSint16(),
+                           'recoil_magnitude' => ReadWorldDistance(),
+                           'firing_sound' => ReadSint16(),
+                           'click_sound' => ReadSint16(),
+                           'charging_sound' => ReadSint16(),
+                           'shell_casing_sound' => ReadSint16(),
+                           'reloading_sound' => ReadSint16(),
+                           'charged_sound' => ReadSint16(),
+                           'projectile_type' => ReadSint16(),
+                           'theta_error' => ReadSint16(),
+                           'dx' => ReadSint16(),
+                           'dy' => ReadSint16(),
+                           'shell_casing_type' => ReadSint16(),
+                           'burst_count' => ReadSint16(),
+                           );
+          }
+          $out->endTag('weapon_definition');
+          last if $SAMPLE;
+        }
+      }
+      else
+      {
+        warn "Skipping unrecognized type: $type\n";
+      }
     }
     $out->endTag('chunk') if $size || $SHOW_ALL;
   }
@@ -607,6 +852,11 @@ sub ReadFixed
 {
   my $fixed = ReadSint32();
   return $fixed / 65536.0;
+}
+sub ReadWorldDistance
+{
+  my $dist = ReadSint16();
+  return $dist / 1024.0;
 }
 
 our $BLOB = undef;
