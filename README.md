@@ -53,3 +53,14 @@ Converts Marathon maps or saved games to XML. This is a work in progress; not al
 
 Converts map XML (from map2xml.pl) into images similar to the in-game automap. Uses Cairo as the rendering engine to output PNG, PDF, or SVG files. Call with the "-help" flag to see the many options.
 
+### mark2dir.pl
+
+Extracts files from a ".mark" archive as used in Marathon: Durandal for XBLA.
+
+### cmt2dds.pl
+
+Uncompresses ".cmt" texture files found in Marathon: Durandal for XBLA.
+
+### cma2wavs.pl
+
+Uncompresses and converts ".cma" audio archives found in Marathon: Durandal for XBLA. Creates one or more ".wav" files in the current directory.
