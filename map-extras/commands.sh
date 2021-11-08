@@ -6,9 +6,9 @@
 ./macbin2data.pl < "Marathon Infinity"/Map.sceA > M3.map
 
 # create XML
-./wad2xml.pl < M1.map > M1.xml
-./wad2xml.pl < M2.map > M2.xml
-./wad2xml.pl < M3.map > M3.xml
+./map2xml.pl < M1.map > M1.xml
+./map2xml.pl < M2.map > M2.xml
+./map2xml.pl < M3.map > M3.xml
 
 # generate automap-style images with markers
 ./mapxml2images.pl -dir M1o -ignore map-extras/M1_ignored_polys.txt -font map-extras/ProFontAO.ttf -zoom -html -scales -mark -legend < M1.xml
