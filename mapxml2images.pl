@@ -437,7 +437,7 @@ for my $levelnum (0..(scalar(@$entries)-1))
         if ($poly->{'media_index'} >= 0)
         {
           my $media = $liquids->[$poly->{'media_index'}];
-          if ($poly->{'floor_height'} < $media->{'low'})
+          if ($poly->{'floor_height'} <= $media->{'low'})
           {
             $color = $COLORS{'water'} if $media->{'type'} == 0;
             $color = $COLORS{'lava'} if $media->{'type'} == 1;
