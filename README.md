@@ -53,6 +53,10 @@ Converts Marathon maps or saved games to XML. This is a work in progress; not al
 
 Converts map XML (from map2xml.pl) into images similar to the in-game automap. Uses Cairo as the rendering engine to output PNG, PDF, or SVG files. Call with the "-help" flag to see the many options.
 
+### live2dir.pl
+
+Extracts files from the ".live" archive used to distribute Marathon: Durandal for XBLA. Note: this script does not support all features of the ".live" format and may fail if used to unpack other games.
+
 ### mark2dir.pl
 
 Extracts files from a ".mark" archive as used in Marathon: Durandal for XBLA.
